@@ -12,6 +12,17 @@ let recognition = null;
 let recognitionActive = false;
 let voices = [];
 
+// Voice loop guards
+let isSpeaking = false;
+let sessionActive = false;
+let awaitingAnswer = false;
+let lastSpokenText = '';
+let suppressRecognitionUntil = 0;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function appendBubble(text, role = 'agent') {
   const div = document.createElement('div');
   div.className = `bubble ${role}`;
@@ -35,16 +46,85 @@ function populateVoices() {
   });
 }
 
-function speak(text, onEnd) {
-  appendBubble(text, 'agent');
-  const utter = new SpeechSynthesisUtterance(text);
-  const idx = Number(voiceSelect.value || 0);
-  if (voices[idx]) utter.voice = voices[idx];
-  utter.rate = 1;
-  utter.pitch = 1;
-  utter.onend = () => onEnd?.();
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utter);
+function stopListening() {
+  if (!recognition || !recognitionActive) return;
+  try {
+    recognition.stop();
+  } catch (err) {
+    console.warn('Recognition stop failed:', err);
+  }
+}
+
+function stopSpeaking() {
+  try {
+    window.speechSynthesis.cancel();
+  } catch (err) {
+    console.warn('speechSynthesis.cancel failed:', err);
+  }
+  isSpeaking = false;
+}
+
+function speak(text, options = {}) {
+  const { logBubble = true, preDelay = 120, postDelay = 450 } = options;
+
+  return new Promise(async (resolve) => {
+    if (!text) {
+      resolve();
+      return;
+    }
+
+    stopListening();
+
+    if (logBubble) {
+      appendBubble(text, 'agent');
+    }
+
+    if (!window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') {
+      await sleep(postDelay);
+      resolve();
+      return;
+    }
+
+    try {
+      window.speechSynthesis.cancel();
+    } catch (err) {
+      console.warn('speechSynthesis.cancel failed:', err);
+    }
+
+    await sleep(preDelay);
+
+    const utter = new SpeechSynthesisUtterance(text);
+    const idx = Number(voiceSelect.value || 0);
+    if (voices[idx]) utter.voice = voices[idx];
+    utter.rate = 1;
+    utter.pitch = 1;
+
+    isSpeaking = true;
+    lastSpokenText = text;
+    suppressRecognitionUntil = Date.now() + preDelay + postDelay + 300;
+
+    utter.onend = async () => {
+      isSpeaking = false;
+      await sleep(postDelay);
+      resolve();
+    };
+
+    utter.onerror = async (event) => {
+      console.warn('Speech synthesis error:', event);
+      isSpeaking = false;
+      await sleep(postDelay);
+      resolve();
+    };
+
+    try {
+      window.speechSynthesis.speak(utter);
+    } catch (err) {
+      console.warn('speechSynthesis.speak failed:', err);
+      isSpeaking = false;
+      await sleep(postDelay);
+      resolve();
+    }
+  });
 }
 
 function getCurrentFactor() {
@@ -72,24 +152,46 @@ function initRecognition() {
     appendBubble('Speech recognition is not supported in this browser. Use Chrome or Edge for the MVP.', 'agent');
     return null;
   }
+
   const rec = new SR();
   rec.lang = 'en-US';
   rec.interimResults = false;
   rec.maxAlternatives = 1;
+  rec.continuous = false;
 
-  rec.onresult = (event) => {
-    const transcript = event.results[0][0].transcript.trim();
+  rec.onresult = async (event) => {
+    const transcript = event.results?.[0]?.[0]?.transcript?.trim();
+    if (!transcript) return;
+
+    recognitionActive = false;
+
+    // Ignore anything captured while app is still talking or during suppression window
+    if (isSpeaking || Date.now() < suppressRecognitionUntil) {
+      return;
+    }
+
     appendBubble(transcript, 'user');
-    handleUserAnswer(transcript);
+    awaitingAnswer = false;
+    await handleUserAnswer(transcript);
   };
 
   rec.onerror = (event) => {
+    recognitionActive = false;
+
+    // Ignore noisy/expected errors while transitioning between speech and listening
+    if (event.error === 'aborted' || event.error === 'no-speech') {
+      setStatus('Ready');
+      return;
+    }
+
     setStatus(`Error: ${event.error}`);
   };
 
   rec.onend = () => {
     recognitionActive = false;
-    if (getCurrentFactor()) setStatus('Ready for next answer');
+    if (sessionActive && awaitingAnswer && !isSpeaking) {
+      setStatus('Ready for next answer');
+    }
   };
 
   return rec;
@@ -97,39 +199,58 @@ function initRecognition() {
 
 function normalizeYesNo(text) {
   const t = text.toLowerCase();
-  if (/\b(yes|yeah|yep|i did|currently|correct|true)\b/.test(t)) return 'yes';
-  if (/\b(no|nope|not at all|did not|false)\b/.test(t)) return 'no';
+  if (/\b(yes|yeah|yep|i did|currently|correct|true|affirmative|sure)\b/.test(t)) return 'yes';
+  if (/\b(no|nope|not at all|did not|false|negative)\b/.test(t)) return 'no';
   return 'unsure';
 }
 
 function listenForAnswer() {
+  if (!sessionActive) return;
+  if (isSpeaking) return;
+
   if (!recognition) recognition = initRecognition();
   if (!recognition) return;
   if (recognitionActive) return;
-  recognitionActive = true;
-  setStatus('Listening…');
-  recognition.start();
+
+  try {
+    recognitionActive = true;
+    awaitingAnswer = true;
+    setStatus('Listening…');
+    recognition.start();
+  } catch (err) {
+    recognitionActive = false;
+    console.warn('Recognition start failed:', err);
+    setStatus('Mic unavailable');
+  }
 }
 
-function askCurrentQuestion() {
+async function askCurrentQuestion() {
   const factor = getCurrentFactor();
   if (!factor) {
-    finishSession();
+    await finishSession();
     return;
   }
-  speak(factor.question, () => {
-    setTimeout(listenForAnswer, 250);
-  });
+
+  awaitingAnswer = false;
+  await speak(factor.question);
+  if (!sessionActive) return;
+  listenForAnswer();
 }
 
 async function finishSession() {
+  sessionActive = false;
+  awaitingAnswer = false;
+  stopListening();
+
   setStatus('Evaluating');
-  speak('Thank you. I am evaluating the responses now.');
+  await speak('Thank you. I am evaluating the responses now.');
+
   const resp = await fetch('/api/evaluate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ playbook: currentPlaybook, answers })
   });
+
   const result = await resp.json();
   renderDecision(result);
   setStatus('Completed');
@@ -164,51 +285,81 @@ function renderDecision(result) {
   });
 }
 
-function handleUserAnswer(transcript) {
+async function handleUserAnswer(transcript) {
   const factor = getCurrentFactor();
-  if (!factor) return;
+  if (!factor || !sessionActive) return;
+
   const normalized = normalizeYesNo(transcript);
   answers[factor.id] = normalized;
 
   if (normalized === 'yes' && factor.followUpYes) {
-    speak(factor.followUpYes);
+    await speak(factor.followUpYes);
+    if (!sessionActive) return;
   }
+
   factorIndex += 1;
 
   const next = getCurrentFactor();
   if (next) {
-    setTimeout(askCurrentQuestion, 800);
+    await sleep(250);
+    await askCurrentQuestion();
   } else {
-    finishSession();
+    await finishSession();
   }
 }
 
-function startSession() {
+async function startSession() {
+  stopSession({ silent: true });
+
   currentPlaybook = playbooks.find((p) => p.id === playbookSelect.value) || playbooks[0] || null;
   $('playbookValue').textContent = currentPlaybook?.name || '—';
   transcriptEl.innerHTML = '';
   answers = {};
   factorIndex = 0;
-  renderDecision({ score: 0, level: 'minimal', recommendation: 'In progress', matchedFactors: [], nextSteps: [] });
+  sessionActive = true;
+  awaitingAnswer = false;
+  renderDecision({
+    score: 0,
+    level: 'minimal',
+    recommendation: 'In progress',
+    matchedFactors: [],
+    nextSteps: []
+  });
+
   if (!currentPlaybook) {
     appendBubble('No playbook loaded.', 'agent');
+    setStatus('No playbook loaded');
     return;
   }
+
   setStatus('Starting');
-  speak(`Starting the ${currentPlaybook.name} playbook. Please answer yes or no when possible.`, () => {
-    setTimeout(askCurrentQuestion, 400);
-  });
+  await speak(`Starting the ${currentPlaybook.name} playbook. Please answer yes or no when possible.`);
+  if (!sessionActive) return;
+
+  await sleep(200);
+  await askCurrentQuestion();
 }
 
-function stopSession() {
-  if (recognitionActive && recognition) recognition.stop();
-  window.speechSynthesis.cancel();
-  setStatus('Stopped');
+function stopSession(options = {}) {
+  const { silent = false } = options;
+  sessionActive = false;
+  awaitingAnswer = false;
+  stopListening();
+  stopSpeaking();
+  if (!silent) {
+    setStatus('Stopped');
+  }
 }
 
 window.speechSynthesis.onvoiceschanged = populateVoices;
-$('startBtn').addEventListener('click', startSession);
-$('stopBtn').addEventListener('click', stopSession);
+$('startBtn').addEventListener('click', () => {
+  startSession().catch((err) => {
+    console.error('Start session failed:', err);
+    setStatus('Start failed');
+  });
+});
+$('stopBtn').addEventListener('click', () => stopSession());
+
 playbookSelect.addEventListener('change', () => {
   currentPlaybook = playbooks.find((p) => p.id === playbookSelect.value) || null;
   $('playbookValue').textContent = currentPlaybook?.name || '—';
@@ -217,5 +368,11 @@ playbookSelect.addEventListener('change', () => {
 (async function init() {
   await loadPlaybooks();
   populateVoices();
-  renderDecision({ score: 0, level: 'minimal', recommendation: 'Not evaluated', matchedFactors: [], nextSteps: [] });
+  renderDecision({
+    score: 0,
+    level: 'minimal',
+    recommendation: 'Not evaluated',
+    matchedFactors: [],
+    nextSteps: []
+  });
 })();
