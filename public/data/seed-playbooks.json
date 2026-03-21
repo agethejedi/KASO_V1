@@ -1,0 +1,224 @@
+{
+  "version": 1,
+  "playbooks": [
+    {
+      "id": "remote-access",
+      "name": "Remote Access / Tech Support Scam",
+      "description": "Adaptive questioning for remote access, tech support impersonation, and account compromise scenarios.",
+      "thresholds": {
+        "low": 20,
+        "moderate": 40,
+        "high": 60
+      },
+      "factors": [
+        {
+          "id": "remote_software_installed",
+          "name": "Remote software installed",
+          "type": "predefined",
+          "weight": 25,
+          "question": "Did anyone ask you to install remote access or screen-sharing software on your phone or computer?",
+          "followUpYes": "What software did they ask you to install, such as AnyDesk, TeamViewer, LogMeIn, Zoho Assist, or something similar?",
+          "resolutionHint": "Advise the customer to disconnect the session and uninstall the remote software.",
+          "positiveCues": [
+            "anydesk",
+            "teamviewer",
+            "logmein",
+            "zoho assist",
+            "screen share",
+            "remote access",
+            "remote software"
+          ],
+          "negativeCues": [],
+          "followUpUnsure": "If you are not fully sure, treat this as unresolved risk and gather a little more detail before moving on."
+        },
+        {
+          "id": "active_session",
+          "name": "Active remote session still running",
+          "type": "predefined",
+          "weight": 30,
+          "question": "Is anyone currently connected to your device or still able to see your screen?",
+          "followUpYes": "Please disconnect from Wi-Fi or mobile data if needed and close the remote access app before proceeding.",
+          "resolutionHint": "Treat as urgent containment.",
+          "positiveCues": [
+            "still connected",
+            "still on my computer",
+            "can still see my screen",
+            "session is active",
+            "they are still connected"
+          ],
+          "negativeCues": [],
+          "followUpUnsure": "If you are not fully sure, treat this as unresolved risk and gather a little more detail before moving on."
+        },
+        {
+          "id": "bank_login_during_session",
+          "name": "Logged into bank during remote session",
+          "type": "predefined",
+          "weight": 35,
+          "question": "Did you log into your bank, email, or crypto accounts while the other person could see your screen?",
+          "followUpYes": "We should treat your credentials as potentially compromised.",
+          "resolutionHint": "Force credential reset and escalate for fraud review.",
+          "positiveCues": [
+            "logged into my bank",
+            "signed into my bank",
+            "opened my email",
+            "opened crypto account",
+            "they saw me log in"
+          ],
+          "negativeCues": [],
+          "followUpUnsure": "If you are not fully sure, treat this as unresolved risk and gather a little more detail before moving on."
+        },
+        {
+          "id": "money_move_instruction",
+          "name": "Instructed to move money",
+          "type": "predefined",
+          "weight": 40,
+          "question": "Did they tell you to move money, buy gift cards, send a wire, or transfer funds to protect your account?",
+          "followUpYes": "That is a major scam indicator.",
+          "resolutionHint": "Place hold or escalate immediately.",
+          "positiveCues": [
+            "move money",
+            "protect my account",
+            "buy gift cards",
+            "send a wire",
+            "transfer funds",
+            "convert to crypto"
+          ],
+          "negativeCues": [],
+          "followUpUnsure": "If you are not fully sure, treat this as unresolved risk and gather a little more detail before moving on."
+        },
+        {
+          "id": "coached_or_threatened",
+          "name": "Coached, rushed, or threatened",
+          "type": "predefined",
+          "weight": 20,
+          "question": "Did they tell you not to speak with your bank, or pressure you to act quickly?",
+          "followUpYes": "That behavior is consistent with coercion.",
+          "resolutionHint": "Escalate and use a warning script.",
+          "positiveCues": [
+            "do not tell the bank",
+            "keep it secret",
+            "hurry",
+            "act quickly",
+            "they threatened",
+            "they pressured me"
+          ],
+          "negativeCues": [],
+          "followUpUnsure": "If you are not fully sure, treat this as unresolved risk and gather a little more detail before moving on."
+        }
+      ],
+      "hardStops": [
+        "customer says a remote access app is still connected",
+        "customer moved money to protect an account",
+        "customer says they were told not to speak with the bank",
+        "customer logged into bank or crypto while screen sharing"
+      ]
+    },
+    {
+      "id": "wire-request",
+      "name": "Bank Wire Request Review",
+      "description": "Adaptive questioning for consumer and small business wire requests.",
+      "thresholds": {
+        "low": 15,
+        "moderate": 35,
+        "high": 55
+      },
+      "factors": [
+        {
+          "id": "new_beneficiary",
+          "name": "New beneficiary",
+          "type": "predefined",
+          "weight": 20,
+          "question": "Is this the first time you are sending money to this recipient?",
+          "followUpYes": "New recipients require enhanced verification.",
+          "resolutionHint": "Require callback or independent verification.",
+          "positiveCues": [
+            "first time",
+            "new recipient",
+            "never sent before"
+          ],
+          "negativeCues": [],
+          "followUpUnsure": "If you are not fully sure, treat this as unresolved risk and gather a little more detail before moving on."
+        },
+        {
+          "id": "changed_instructions",
+          "name": "Payment instructions changed",
+          "type": "predefined",
+          "weight": 30,
+          "question": "Did the payment instructions or account number change recently, especially by email or text?",
+          "followUpYes": "Changed instructions can indicate business email compromise or impersonation.",
+          "resolutionHint": "Hold and verify with a trusted number.",
+          "positiveCues": [
+            "changed instructions",
+            "different account number",
+            "updated wire details",
+            "email changed the payment info"
+          ],
+          "negativeCues": [],
+          "followUpUnsure": "If you are not fully sure, treat this as unresolved risk and gather a little more detail before moving on."
+        },
+        {
+          "id": "urgency_secrecy",
+          "name": "Urgency or secrecy language",
+          "type": "predefined",
+          "weight": 20,
+          "question": "Has anyone told you this payment must be sent urgently or kept confidential?",
+          "followUpYes": "Urgency and secrecy are elevated fraud indicators.",
+          "resolutionHint": "Escalate for analyst review.",
+          "positiveCues": [
+            "urgent",
+            "right away",
+            "confidential",
+            "secret",
+            "do not tell anyone"
+          ],
+          "negativeCues": [],
+          "followUpUnsure": "If you are not fully sure, treat this as unresolved risk and gather a little more detail before moving on."
+        },
+        {
+          "id": "on_phone_with_third_party",
+          "name": "Coached by third party",
+          "type": "predefined",
+          "weight": 25,
+          "question": "Are you currently on the phone or messaging with someone who is guiding this transfer?",
+          "followUpYes": "Live coaching is a significant warning sign.",
+          "resolutionHint": "Pause transfer and escalate.",
+          "positiveCues": [
+            "on the phone with them",
+            "they are guiding me",
+            "someone is walking me through it",
+            "messaging with them right now"
+          ],
+          "negativeCues": [],
+          "followUpUnsure": "If you are not fully sure, treat this as unresolved risk and gather a little more detail before moving on."
+        },
+        {
+          "id": "independent_verification_missing",
+          "name": "No independent verification",
+          "type": "predefined",
+          "weight": 25,
+          "question": "Have you independently verified the recipient using a trusted number or known contact, not from the message requesting payment?",
+          "followUpYes": "",
+          "resolutionHint": "If no, challenge or hold the wire pending verification.",
+          "positiveCues": [
+            "have not verified",
+            "did not call",
+            "only from the email",
+            "not independently verified"
+          ],
+          "negativeCues": [
+            "i verified",
+            "i called a trusted number",
+            "i confirmed with known contact"
+          ],
+          "followUpUnsure": "Please pause and verify the recipient using a trusted number or previously known contact before proceeding."
+        }
+      ],
+      "hardStops": [
+        "wire instructions changed by email or text only",
+        "client is being coached live by another party",
+        "client says the transfer must be secret or urgent",
+        "client cannot verify the recipient independently"
+      ]
+    }
+  ]
+}

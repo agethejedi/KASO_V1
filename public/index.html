@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fraud Response Voice Agent</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        <div class="title">
+          <h1>Fraud Response Voice Agent</h1>
+          <p>Adaptive fraud discovery for remote access scams and bank wire reviews.</p>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <a href="/admin.html">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="card">
+      <div class="card-header">
+        <h2>Live session</h2>
+        <p class="muted">Guided mode is the most reliable scorecard path today. Realtime mode uses OpenAI WebRTC voice when your OpenAI key is configured.</p>
+        <hr class="soft" />
+      </div>
+      <div class="card-body stack">
+        <div class="row three-up">
+          <div>
+            <label for="playbookSelect">Playbook</label>
+            <select id="playbookSelect"></select>
+          </div>
+          <div>
+            <label for="voiceModeSelect">Voice mode</label>
+            <select id="voiceModeSelect">
+              <option value="guided">Guided browser voice</option>
+              <option value="realtime">OpenAI Realtime beta</option>
+            </select>
+          </div>
+          <div>
+            <label for="voiceSelect">Browser voice</label>
+            <select id="voiceSelect"></select>
+          </div>
+        </div>
+
+        <div class="mic-panel">
+          <div class="mic-ring" id="micRing" aria-hidden="true">
+            <div class="mic-dot"></div>
+          </div>
+          <div class="mic-copy">
+            <strong id="micHeadline">Idle</strong>
+            <p id="micSubtext" class="muted">Press start to begin. In guided mode you can answer by voice, quick buttons, or typed fallback.</p>
+          </div>
+          <div class="mic-badges">
+            <span class="status-pill" id="statusPill">Idle</span>
+            <span class="status-pill" id="modePill">Guided</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <button class="btn-primary" id="startBtn">Start session</button>
+          <button class="btn-secondary" id="stopBtn">Stop session</button>
+          <button class="btn-secondary" id="evaluateBtn">Evaluate transcript</button>
+        </div>
+
+        <div class="answer-card stack" id="guidedAnswerCard">
+          <div>
+            <div class="muted smallcaps">Current prompt</div>
+            <div class="current-question" id="currentQuestion">Not started.</div>
+          </div>
+          <div class="quick-actions">
+            <button class="quick-btn" data-answer="yes">Yes</button>
+            <button class="quick-btn" data-answer="no">No</button>
+            <button class="quick-btn" data-answer="unsure">Unsure</button>
+          </div>
+          <div class="row">
+            <div style="flex:1 1 320px;">
+              <label for="manualAnswerInput">Typed fallback / notes</label>
+              <input id="manualAnswerInput" placeholder="Type a response if voice capture misses a few words" />
+            </div>
+            <div style="align-self:end;">
+              <button class="btn-secondary" id="submitManualAnswerBtn">Submit typed answer</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="transcript" id="transcript"></div>
+      </div>
+    </section>
+
+    <aside class="card">
+      <div class="card-header">
+        <h2>Decision panel</h2>
+        <p class="muted">Guided mode fills structured answers directly. Realtime mode can be scored from the transcript.</p>
+        <hr class="soft" />
+      </div>
+      <div class="card-body stack">
+        <div class="kpis">
+          <div class="kpi"><h3>Score</h3><strong id="scoreValue">0</strong></div>
+          <div class="kpi"><h3>Level</h3><strong id="levelValue">Minimal</strong></div>
+          <div class="kpi"><h3>Recommendation</h3><strong id="recommendationValue">Not evaluated</strong></div>
+          <div class="kpi"><h3>Playbook</h3><strong id="playbookValue">—</strong></div>
+        </div>
+
+        <div>
+          <h3>Triggered factors</h3>
+          <div class="factor-list" id="factorList"></div>
+        </div>
+
+        <div>
+          <h3>Next steps</h3>
+          <div class="next-steps" id="nextSteps"></div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
