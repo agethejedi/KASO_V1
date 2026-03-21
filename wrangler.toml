@@ -4,5 +4,5 @@ pages_build_output_dir = "public"
 
 [[kv_namespaces]]
 binding = "PLAYBOOKS"
-id = "replace-with-your-kv-namespace-id"
+id = "e6e896204f2248b383c3d07c2528a109"
 preview_id = "replace-with-your-preview-kv-namespace-id"
