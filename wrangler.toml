@@ -10,3 +10,4 @@ OPENAI_REALTIME_MODEL = "gpt-realtime"
 OPENAI_REALTIME_VOICE = "marin"
 OPENAI_CASE_MODEL = "gpt-4.1-mini"
 
+
