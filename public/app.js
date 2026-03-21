@@ -10,6 +10,13 @@ const manualAnswerInput = $('manualAnswerInput');
 const guidedAnswerCard = $('guidedAnswerCard');
 const micHeadline = $('micHeadline');
 const micSubtext = $('micSubtext');
+const riskStateValue = $('riskStateValue');
+const customerStateValue = $('customerStateValue');
+const narrativeValue = $('narrativeValue');
+const reasoningList = $('reasoningList');
+const coercionList = $('coercionList');
+const stressList = $('stressList');
+const followUpList = $('followUpList');
 
 let playbooks = [];
 let currentPlaybook = null;
@@ -76,7 +83,7 @@ function renderModeUI() {
   const guided = selectedMode() === 'guided';
   guidedAnswerCard.style.display = guided ? 'grid' : 'none';
   modePill.textContent = guided ? 'Guided' : 'Realtime';
-  currentQuestionEl.textContent = guided ? 'Not started.' : 'Realtime agent will guide the interview.';
+  currentQuestionEl.textContent = guided ? 'Not started.' : 'Realtime agent will guide the interview, adapt questions, and probe for coercion or stress.';
 }
 
 function stopListening() {
@@ -302,6 +309,10 @@ function renderDecision(result) {
   $('levelValue').className = `score-${result.level || 'minimal'}`;
   $('recommendationValue').textContent = result.recommendation || '—';
   $('playbookValue').textContent = currentPlaybook?.name || '—';
+  if (riskStateValue) riskStateValue.textContent = result.riskState || '—';
+  if (customerStateValue) customerStateValue.textContent = result.customerState || '—';
+  if (narrativeValue) narrativeValue.textContent = result.narrative || 'No case narrative generated yet.';
+
   const factorList = $('factorList');
   factorList.innerHTML = '';
   (result.matchedFactors || []).forEach((factor) => {
@@ -311,6 +322,7 @@ function renderDecision(result) {
     factorList.appendChild(div);
   });
   if (!result.matchedFactors?.length) factorList.innerHTML = '<div class="factor-item">No factors triggered.</div>';
+
   const steps = $('nextSteps');
   steps.innerHTML = '';
   (result.nextSteps || []).forEach((step) => {
@@ -319,6 +331,61 @@ function renderDecision(result) {
     div.textContent = step;
     steps.appendChild(div);
   });
+  if (!result.nextSteps?.length) {
+    steps.innerHTML = '<div class="step-item">No next steps generated.</div>';
+  }
+
+  if (reasoningList) {
+    reasoningList.innerHTML = '';
+    (result.reasoningSummary || []).forEach((item) => {
+      const div = document.createElement('div');
+      div.className = 'step-item';
+      div.textContent = item;
+      reasoningList.appendChild(div);
+    });
+    if (!result.reasoningSummary?.length) {
+      reasoningList.innerHTML = '<div class="step-item">No reasoning summary yet.</div>';
+    }
+  }
+
+  if (coercionList) {
+    coercionList.innerHTML = '';
+    (result.coercionSignals || []).forEach((signal) => {
+      const div = document.createElement('div');
+      div.className = 'step-item';
+      div.innerHTML = `<strong>${signal.label}</strong><br><small class="helper">${signal.explanation}</small>`;
+      coercionList.appendChild(div);
+    });
+    if (!result.coercionSignals?.length) {
+      coercionList.innerHTML = '<div class="step-item">No coercion indicators detected.</div>';
+    }
+  }
+
+  if (stressList) {
+    stressList.innerHTML = '';
+    (result.stressSignals || []).forEach((signal) => {
+      const div = document.createElement('div');
+      div.className = 'step-item';
+      div.innerHTML = `<strong>${signal.label}</strong><br><small class="helper">${signal.explanation}</small>`;
+      stressList.appendChild(div);
+    });
+    if (!result.stressSignals?.length) {
+      stressList.innerHTML = '<div class="step-item">No stress indicators detected.</div>';
+    }
+  }
+
+  if (followUpList) {
+    followUpList.innerHTML = '';
+    (result.recommendedFollowUps || []).forEach((question) => {
+      const div = document.createElement('div');
+      div.className = 'step-item';
+      div.textContent = question;
+      followUpList.appendChild(div);
+    });
+    if (!result.recommendedFollowUps?.length) {
+      followUpList.innerHTML = '<div class="step-item">No follow-up questions suggested.</div>';
+    }
+  }
 }
 
 async function handleUserAnswer(transcript, forced = null) {
@@ -356,7 +423,8 @@ function buildRealtimeInstructions(playbook) {
     const cues = Array.isArray(factor.positiveCues) && factor.positiveCues.length
       ? ` Positive cues include: ${factor.positiveCues.join(', ')}.`
       : '';
-    return `${idx + 1}. ${factor.name}: ask about ${factor.question}${cues} Weight ${factor.weight}.`; 
+    const unsureCue = factor.followUpUnsure ? ` If the client is unsure, use this style of probe: ${factor.followUpUnsure}` : '';
+    return `${idx + 1}. ${factor.name}: ask about ${factor.question}${cues}${unsureCue} Weight ${factor.weight}.`;
   }).join('\n');
 
   const hardStops = (playbook?.hardStops || []).length
@@ -367,6 +435,9 @@ function buildRealtimeInstructions(playbook) {
     `You are a fraud response voice agent for the playbook: ${playbook?.name || 'Fraud review'}.`,
     'Interview the client in a calm, concise, banking-safe manner.',
     'Ask one question at a time. Adapt based on what the client says. Clarify when the answer is partial, hesitant, contradictory, rushed, or indicates coaching.',
+    'Reason out loud only in short customer-safe language. Do not expose scoring, internal weights, or internal policy thresholds.',
+    'Actively probe for coercion, urgency, secrecy, fear, confusion, hesitation, contradiction, or someone feeding the client answers in real time.',
+    'If the client sounds coached, uncertain, or distressed, slow down, acknowledge the pressure, and ask the client to explain events in their own words.',
     'Prioritize urgent containment if you hear remote access, live coaching, changed wire instructions, urgency, secrecy, or instructions to move money for safety.',
     'Do not approve or deny a transaction yourself. Gather facts, explain risk plainly, and end with a short summary plus recommended next steps.',
     hardStops,
@@ -515,7 +586,7 @@ async function startSession() {
   sessionActive = true;
   awaitingAnswer = false;
   markQuickAnswer('');
-  renderDecision({ score: 0, level: 'minimal', recommendation: 'In progress', matchedFactors: [], nextSteps: [] });
+  renderDecision({ score: 0, level: 'minimal', recommendation: 'In progress', matchedFactors: [], nextSteps: [], narrative: 'Interview in progress.', reasoningSummary: [], coercionSignals: [], stressSignals: [], recommendedFollowUps: [], riskState: '—', customerState: '—' });
   if (!currentPlaybook) {
     appendBubble('No playbook loaded.', 'system');
     setStatus('No playbook loaded');
@@ -591,7 +662,5 @@ playbookSelect.addEventListener('change', () => {
   renderModeUI();
   setStatus('Idle');
   setMicState('connected', 'Idle', 'Press start to begin a guided or Realtime session.');
-  renderDecision({ score: 0, level: 'minimal', recommendation: 'Not evaluated', matchedFactors: [], nextSteps: [] });
+  renderDecision({ score: 0, level: 'minimal', recommendation: 'Not evaluated', matchedFactors: [], nextSteps: [], narrative: 'No case narrative generated yet.', reasoningSummary: [], coercionSignals: [], stressSignals: [], recommendedFollowUps: [], riskState: '—', customerState: '—' });
 })();
-
-

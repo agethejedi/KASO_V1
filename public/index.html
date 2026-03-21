@@ -96,20 +96,48 @@
     <aside class="card">
       <div class="card-header">
         <h2>Decision panel</h2>
-        <p class="muted">Guided mode fills structured answers directly. Realtime mode can be scored from the transcript.</p>
+        <p class="muted">Guided mode fills structured answers directly. Realtime mode can be scored from the transcript, with coercion and stress indicators plus a case narrative.</p>
         <hr class="soft" />
       </div>
       <div class="card-body stack">
-        <div class="kpis">
+        <div class="kpis kpis-six">
           <div class="kpi"><h3>Score</h3><strong id="scoreValue">0</strong></div>
           <div class="kpi"><h3>Level</h3><strong id="levelValue">Minimal</strong></div>
           <div class="kpi"><h3>Recommendation</h3><strong id="recommendationValue">Not evaluated</strong></div>
           <div class="kpi"><h3>Playbook</h3><strong id="playbookValue">—</strong></div>
+          <div class="kpi"><h3>Risk state</h3><strong id="riskStateValue">—</strong></div>
+          <div class="kpi"><h3>Customer state</h3><strong id="customerStateValue">—</strong></div>
         </div>
 
         <div>
           <h3>Triggered factors</h3>
           <div class="factor-list" id="factorList"></div>
+        </div>
+
+        <div>
+          <h3>Analyst narrative</h3>
+          <div class="factor-item narrative-block" id="narrativeValue">No case narrative generated yet.</div>
+        </div>
+
+        <div>
+          <h3>Reasoning summary</h3>
+          <div class="next-steps" id="reasoningList"></div>
+        </div>
+
+        <div class="split insight-grid">
+          <div>
+            <h3>Coercion indicators</h3>
+            <div class="next-steps" id="coercionList"></div>
+          </div>
+          <div>
+            <h3>Stress / uncertainty indicators</h3>
+            <div class="next-steps" id="stressList"></div>
+          </div>
+        </div>
+
+        <div>
+          <h3>Recommended follow-up questions</h3>
+          <div class="next-steps" id="followUpList"></div>
         </div>
 
         <div>

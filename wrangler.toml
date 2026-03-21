@@ -1,8 +1,11 @@
-name = "kaso-v1"
-compatibility_date = "2025-01-15"
+name = "fraud-response-voice-agent"
 pages_build_output_dir = "public"
 
 [[kv_namespaces]]
-binding = "PLAYBOOKS"
-id = "e6e896204f2248b383c3d07c2528a109"
-preview_id = "replace-with-your-preview-kv-namespace-id"
+binding = "PLAYBOOK_KV"
+id = "replace-with-your-kv-namespace-id"
+
+[vars]
+OPENAI_REALTIME_MODEL = "gpt-realtime"
+OPENAI_REALTIME_VOICE = "marin"
+OPENAI_CASE_MODEL = "gpt-4.1-mini"
