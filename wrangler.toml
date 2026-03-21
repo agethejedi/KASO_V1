@@ -9,3 +9,4 @@ id = "e6e896204f2248b383c3d07c2528a109"
 OPENAI_REALTIME_MODEL = "gpt-realtime"
 OPENAI_REALTIME_VOICE = "marin"
 OPENAI_CASE_MODEL = "gpt-4.1-mini"
+
