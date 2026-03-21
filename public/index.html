@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fraud Response Voice Agent</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        <div class="title">
+          <h1>Fraud Response Voice Agent</h1>
+          <p>Browser-based MVP for adaptive fraud discovery and recommendation.</p>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <a href="/admin.html">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="card">
+      <div class="card-header">
+        <h2>Live session</h2>
+        <p class="muted">Uses browser mic + speech synthesis for MVP speed. Best in Chrome or Edge.</p>
+        <hr class="soft" />
+      </div>
+      <div class="card-body stack">
+        <div class="row">
+          <div style="flex:1 1 260px;">
+            <label for="playbookSelect">Playbook</label>
+            <select id="playbookSelect"></select>
+          </div>
+          <div style="flex:1 1 220px;">
+            <label for="voiceSelect">Voice</label>
+            <select id="voiceSelect"></select>
+          </div>
+        </div>
+
+        <div class="row">
+          <button class="btn-primary" id="startBtn">Start voice session</button>
+          <button class="btn-secondary" id="stopBtn">Stop listening</button>
+          <span class="status-pill" id="statusPill">Idle</span>
+        </div>
+
+        <div class="transcript" id="transcript"></div>
+      </div>
+    </section>
+
+    <aside class="card">
+      <div class="card-header">
+        <h2>Decision panel</h2>
+        <p class="muted">Risk score updates when the session completes.</p>
+        <hr class="soft" />
+      </div>
+      <div class="card-body stack">
+        <div class="kpis">
+          <div class="kpi"><h3>Score</h3><strong id="scoreValue">0</strong></div>
+          <div class="kpi"><h3>Level</h3><strong id="levelValue">Minimal</strong></div>
+          <div class="kpi"><h3>Recommendation</h3><strong id="recommendationValue">Not evaluated</strong></div>
+          <div class="kpi"><h3>Playbook</h3><strong id="playbookValue">—</strong></div>
+        </div>
+
+        <div>
+          <h3>Triggered factors</h3>
+          <div class="factor-list" id="factorList"></div>
+        </div>
+
+        <div>
+          <h3>Next steps</h3>
+          <div class="next-steps" id="nextSteps"></div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

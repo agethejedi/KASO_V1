@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Fraud Response Voice Agent</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        <div class="title">
+          <h1>Admin Playbook Builder</h1>
+          <p>Choose predefined factors or create custom ones for the MVP.</p>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <a href="/">Agent</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="shell" style="grid-template-columns: 1fr;">
+    <section class="card">
+      <div class="card-header">
+        <h2>Playbook editor</h2>
+        <p class="muted">Server persistence uses Cloudflare KV when configured.</p>
+        <hr class="soft" />
+      </div>
+      <div class="card-body stack">
+        <div class="split">
+          <div>
+            <label for="adminToken">Admin bearer token</label>
+            <input id="adminToken" type="password" placeholder="Required to save to /api/playbooks" />
+          </div>
+          <div>
+            <label for="adminPlaybookSelect">Select playbook</label>
+            <select id="adminPlaybookSelect"></select>
+          </div>
+        </div>
+
+        <div class="split">
+          <div>
+            <label for="playbookName">Playbook name</label>
+            <input id="playbookName" />
+          </div>
+          <div>
+            <label for="playbookDescription">Description</label>
+            <input id="playbookDescription" />
+          </div>
+        </div>
+
+        <div class="split">
+          <div>
+            <label for="thresholdLow">Low threshold</label>
+            <input id="thresholdLow" type="number" />
+          </div>
+          <div>
+            <label for="thresholdModerate">Moderate threshold</label>
+            <input id="thresholdModerate" type="number" />
+          </div>
+        </div>
+
+        <div class="split">
+          <div>
+            <label for="thresholdHigh">High threshold</label>
+            <input id="thresholdHigh" type="number" />
+          </div>
+          <div>
+            <label for="predefinedFactorSelect">Add predefined factor</label>
+            <div class="row">
+              <select id="predefinedFactorSelect"></select>
+              <button class="btn-secondary" id="addPredefinedBtn" type="button">Add</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack">
+          <h3>Current factors</h3>
+          <div class="admin-list" id="factorEditors"></div>
+        </div>
+
+        <div class="factor-editor stack">
+          <h3>Create custom factor</h3>
+          <div class="split">
+            <div>
+              <label for="customName">Name</label>
+              <input id="customName" />
+            </div>
+            <div>
+              <label for="customWeight">Weight</label>
+              <input id="customWeight" type="number" value="20" />
+            </div>
+          </div>
+          <div>
+            <label for="customQuestion">Question</label>
+            <input id="customQuestion" />
+          </div>
+          <div>
+            <label for="customHint">Resolution hint</label>
+            <input id="customHint" />
+          </div>
+          <button class="btn-secondary" id="addCustomBtn" type="button">Add custom factor</button>
+        </div>
+
+        <div class="row">
+          <button class="btn-primary" id="saveBtn" type="button">Save playbooks</button>
+          <button class="btn-secondary" id="resetBtn" type="button">Reload from server</button>
+        </div>
+
+        <div id="adminMessage" class="muted"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/admin.js"></script>
+</body>
+</html>
