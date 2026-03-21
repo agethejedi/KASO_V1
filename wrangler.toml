@@ -1,4 +1,4 @@
-name = "fraud-response-voice-agent"
+name = "kaso-v1"
 compatibility_date = "2025-01-15"
 pages_build_output_dir = "public"
 
