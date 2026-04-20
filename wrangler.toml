@@ -2,7 +2,17 @@ name = "kaso-v1"
 compatibility_date = "2025-01-15"
 pages_build_output_dir = "public"
 
+# ── Playbooks KV (existing) ───────────────────────────────────────────────────
 [[kv_namespaces]]
-binding = "PLAYBOOKS"
-id = "e6e896204f2248b383c3d07c2528a109"
+binding    = "PLAYBOOKS"
+id         = "e6e896204f2248b383c3d07c2528a109"
 preview_id = "replace-with-your-preview-kv-namespace-id"
+
+# ── Cases KV (new) ────────────────────────────────────────────────────────────
+# Create this namespace in the Cloudflare dashboard:
+#   Workers & Pages → KV → Create namespace → name it "kaso-v1-cases"
+# Then paste the namespace IDs below.
+[[kv_namespaces]]
+binding    = "CASES"
+id         = "replace-with-your-cases-kv-namespace-id"
+preview_id = "replace-with-your-cases-preview-kv-namespace-id"
