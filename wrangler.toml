@@ -14,5 +14,5 @@ preview_id = "replace-with-your-preview-kv-namespace-id"
 # Then paste the namespace IDs below.
 [[kv_namespaces]]
 binding    = "CASES"
-id         = "replace-with-your-cases-kv-namespace-id"
-preview_id = "replace-with-your-cases-preview-kv-namespace-id"
+id         = "c42242aa5a864fc5ac77003ab5776534"
+preview_id = "b8bea38f14414f1b8e2a503523500b47"
