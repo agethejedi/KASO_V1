@@ -7,6 +7,61 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+
+  <!-- ── INTAKE MODAL ─────────────────────────────────────────────────────── -->
+  <div id="intakeModal" class="intake-overlay">
+    <div class="intake-modal">
+      <div class="intake-eyebrow">RISKXLABS / FRAUD AGENT</div>
+      <h2 class="intake-title">Secure Assessment</h2>
+      <p class="intake-sub">
+        Your information is used only to track your case and send you status updates.
+        It is never shared.
+      </p>
+
+      <form id="intakeForm" class="intake-form" novalidate>
+        <div class="intake-row">
+          <div class="intake-field">
+            <label for="intakeFirst">First name <span class="req">*</span></label>
+            <input id="intakeFirst" type="text" placeholder="Jane" required />
+          </div>
+          <div class="intake-field">
+            <label for="intakeLast">Last name</label>
+            <input id="intakeLast" type="text" placeholder="Smith" />
+          </div>
+        </div>
+
+        <div class="intake-field">
+          <label for="intakeEmail">Email address <span class="req">*</span></label>
+          <input id="intakeEmail" type="email" placeholder="you@example.com" required />
+          <div class="intake-hint">We'll send your case number and updates here.</div>
+        </div>
+
+        <div class="intake-field">
+          <label for="intakePhone">Phone number <span class="intake-optional">(optional)</span></label>
+          <input id="intakePhone" type="tel" placeholder="+1 (555) 000-0000" />
+          <div class="intake-hint">Used only if a specialist needs to reach you.</div>
+        </div>
+
+        <button type="submit" class="btn-primary intake-submit">Begin assessment →</button>
+      </form>
+
+      <p class="intake-privacy">
+        🔒 Encrypted session · Not stored on your device ·
+        Case reference emailed immediately
+      </p>
+    </div>
+  </div>
+
+  <!-- ── CASE TOAST ────────────────────────────────────────────────────────── -->
+  <div id="caseToast" class="case-toast">
+    <span class="case-toast-icon">📋</span>
+    <div>
+      <div class="case-toast-title">Case opened</div>
+      <div class="case-toast-id" id="caseToastId">—</div>
+    </div>
+  </div>
+
+  <!-- ── HEADER ────────────────────────────────────────────────────────────── -->
   <header class="header">
     <div class="topbar">
       <div class="brand">
@@ -16,110 +71,219 @@
           <p>Adaptive fraud discovery for remote access scams and bank wire reviews.</p>
         </div>
       </div>
+
+      <!-- Case chip — shown once a case is opened -->
+      <div id="caseChip" class="case-chip" style="display:none;">
+        <span class="case-chip-label">CASE</span>
+        <span id="caseChipId" class="case-chip-id">—</span>
+      </div>
+
       <nav class="nav-links">
         <a href="/admin.html">Admin</a>
       </nav>
     </div>
+
+    <!-- User identity strip — shown once intake is complete -->
+    <div id="userStrip" class="user-strip" style="display:none;">
+      <span class="user-strip-avatar">👤</span>
+      <div class="user-strip-info">
+        <div class="user-strip-name" id="userStripName">—</div>
+        <div class="user-strip-contact" id="userStripContact">—</div>
+      </div>
+    </div>
   </header>
 
-  <main class="shell">
-    <section class="card">
-      <div class="card-header">
-        <h2>Live session</h2>
-        <p class="muted">Guided mode is the most reliable scorecard path today. Realtime mode uses OpenAI WebRTC voice when your OpenAI key is configured.</p>
-        <hr class="soft" />
-      </div>
-      <div class="card-body stack">
-        <div class="row three-up">
-          <div>
-            <label for="playbookSelect">Playbook</label>
-            <select id="playbookSelect"></select>
-          </div>
-          <div>
-            <label for="voiceModeSelect">Voice mode</label>
-            <select id="voiceModeSelect">
-              <option value="guided">Guided browser voice</option>
-              <option value="realtime">OpenAI Realtime beta</option>
-            </select>
-          </div>
-          <div>
-            <label for="voiceSelect">Browser voice</label>
-            <select id="voiceSelect"></select>
-          </div>
-        </div>
+  <!-- ── MAIN SHELL ─────────────────────────────────────────────────────────── -->
+  <main class="shell shell-with-evidence">
 
-        <div class="mic-panel">
-          <div class="mic-ring" id="micRing" aria-hidden="true">
-            <div class="mic-dot"></div>
-          </div>
-          <div class="mic-copy">
-            <strong id="micHeadline">Idle</strong>
-            <p id="micSubtext" class="muted">Press start to begin. In guided mode you can answer by voice, quick buttons, or typed fallback.</p>
-          </div>
-          <div class="mic-badges">
-            <span class="status-pill" id="statusPill">Idle</span>
-            <span class="status-pill" id="modePill">Guided</span>
-          </div>
+    <!-- Left column: existing session card -->
+    <div class="session-column">
+      <section class="card">
+        <div class="card-header">
+          <h2>Live session</h2>
+          <p class="muted">Guided mode is the most reliable scorecard path today. Realtime mode uses OpenAI WebRTC voice when your OpenAI key is configured.</p>
+          <hr class="soft" />
         </div>
-
-        <div class="row">
-          <button class="btn-primary" id="startBtn">Start session</button>
-          <button class="btn-secondary" id="stopBtn">Stop session</button>
-          <button class="btn-secondary" id="evaluateBtn">Evaluate transcript</button>
-        </div>
-
-        <div class="answer-card stack" id="guidedAnswerCard">
-          <div>
-            <div class="muted smallcaps">Current prompt</div>
-            <div class="current-question" id="currentQuestion">Not started.</div>
+        <div class="card-body stack">
+          <div class="row three-up">
+            <div>
+              <label for="playbookSelect">Playbook</label>
+              <select id="playbookSelect"></select>
+            </div>
+            <div>
+              <label for="voiceModeSelect">Voice mode</label>
+              <select id="voiceModeSelect">
+                <option value="guided">Guided browser voice</option>
+                <option value="realtime">OpenAI Realtime beta</option>
+              </select>
+            </div>
+            <div>
+              <label for="voiceSelect">Browser voice</label>
+              <select id="voiceSelect"></select>
+            </div>
           </div>
-          <div class="quick-actions">
-            <button class="quick-btn" data-answer="yes">Yes</button>
-            <button class="quick-btn" data-answer="no">No</button>
-            <button class="quick-btn" data-answer="unsure">Unsure</button>
+
+          <div class="mic-panel">
+            <div class="mic-ring" id="micRing" aria-hidden="true">
+              <div class="mic-dot"></div>
+            </div>
+            <div class="mic-copy">
+              <strong id="micHeadline">Idle</strong>
+              <p id="micSubtext" class="muted">Press start to begin. In guided mode you can answer by voice, quick buttons, or typed fallback.</p>
+            </div>
+            <div class="mic-badges">
+              <span class="status-pill" id="statusPill">Idle</span>
+              <span class="status-pill" id="modePill">Guided</span>
+            </div>
           </div>
+
           <div class="row">
-            <div style="flex:1 1 320px;">
-              <label for="manualAnswerInput">Typed fallback / notes</label>
-              <input id="manualAnswerInput" placeholder="Type a response if voice capture misses a few words" />
+            <button class="btn-primary" id="startBtn">Start session</button>
+            <button class="btn-secondary" id="stopBtn">Stop session</button>
+            <button class="btn-secondary" id="evaluateBtn">Evaluate transcript</button>
+          </div>
+
+          <div class="answer-card stack" id="guidedAnswerCard">
+            <div>
+              <div class="muted smallcaps">Current prompt</div>
+              <div class="current-question" id="currentQuestion">Not started.</div>
             </div>
-            <div style="align-self:end;">
-              <button class="btn-secondary" id="submitManualAnswerBtn">Submit typed answer</button>
+            <div class="quick-actions">
+              <button class="quick-btn" data-answer="yes">Yes</button>
+              <button class="quick-btn" data-answer="no">No</button>
+              <button class="quick-btn" data-answer="unsure">Unsure</button>
             </div>
+            <div class="row">
+              <div style="flex:1 1 320px;">
+                <label for="manualAnswerInput">Typed fallback / notes</label>
+                <input id="manualAnswerInput" placeholder="Type a response if voice capture misses a few words" />
+              </div>
+              <div style="align-self:end;">
+                <button class="btn-secondary" id="submitManualAnswerBtn">Submit typed answer</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="transcript" id="transcript"></div>
+        </div>
+      </section>
+
+      <!-- Decision panel -->
+      <aside class="card">
+        <div class="card-header">
+          <h2>Decision panel</h2>
+          <p class="muted">Guided mode fills structured answers directly. Realtime mode can be scored from the transcript.</p>
+          <hr class="soft" />
+        </div>
+        <div class="card-body stack">
+          <div class="kpis">
+            <div class="kpi"><h3>Score</h3><strong id="scoreValue">0</strong></div>
+            <div class="kpi"><h3>Level</h3><strong id="levelValue">Minimal</strong></div>
+            <div class="kpi"><h3>Recommendation</h3><strong id="recommendationValue">Not evaluated</strong></div>
+            <div class="kpi"><h3>Playbook</h3><strong id="playbookValue">—</strong></div>
+          </div>
+          <div>
+            <h3>Triggered factors</h3>
+            <div class="factor-list" id="factorList"></div>
+          </div>
+          <div>
+            <h3>Next steps</h3>
+            <div class="next-steps" id="nextSteps"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ── EVIDENCE PANEL ──────────────────────────────────────────────────── -->
+    <aside class="card evidence-panel">
+      <div class="card-header">
+        <h2>Evidence intake</h2>
+        <p class="muted">Submit links, screenshots, social profiles, or crypto addresses for real-time AI analysis.</p>
+        <hr class="soft" />
+      </div>
+
+      <!-- Tabs -->
+      <div class="ev-tabs">
+        <button class="ev-tab active" data-tab="ev-link">🔗 URL</button>
+        <button class="ev-tab" data-tab="ev-screenshot">📸 Screenshot</button>
+        <button class="ev-tab" data-tab="ev-social">👤 Social</button>
+        <button class="ev-tab" data-tab="ev-crypto">₿ Crypto</button>
+        <button class="ev-tab" data-tab="ev-log">📋 Log <span id="evLogCount">0</span></button>
+      </div>
+
+      <div class="ev-body">
+
+        <!-- URL TAB -->
+        <div class="ev-pane active" id="ev-link">
+          <label class="ev-label">Paste URL or link</label>
+          <div class="ev-input-row">
+            <input id="evLinkInput" class="ev-input" type="url" placeholder="https://…" />
+            <button class="ev-analyze-btn" id="evAnalyzeLinkBtn">Analyze</button>
+          </div>
+          <p class="ev-hint">Paste any link they sent — email, text, pop-up, or download. AI checks for phishing, domain age, lookalikes, and known threat signatures.</p>
+          <div class="ev-result" id="evLinkResult"></div>
+        </div>
+
+        <!-- SCREENSHOT TAB -->
+        <div class="ev-pane" id="ev-screenshot">
+          <label class="ev-label">Upload screenshot</label>
+          <div class="ev-dropzone" id="evDropZone">
+            <input type="file" id="evFileInput" accept="image/*" />
+            <div class="ev-drop-icon">📎</div>
+            <div class="ev-drop-title">Drop image here</div>
+            <div class="ev-drop-sub">or click to browse · PNG JPG WEBP</div>
+          </div>
+          <div class="ev-img-preview" id="evImgPreview" style="display:none;">
+            <img id="evImgEl" src="" alt="" />
+            <button class="ev-img-clear" id="evImgClear">✕</button>
+          </div>
+          <button class="ev-analyze-btn" id="evAnalyzeImgBtn" style="display:none;width:100%;">Analyze screenshot →</button>
+          <p class="ev-hint">Pop-ups, emails, fake alerts, and texts analyzed for spoofed branding, urgency language, and social engineering.</p>
+          <div class="ev-result" id="evImgResult"></div>
+        </div>
+
+        <!-- SOCIAL TAB -->
+        <div class="ev-pane" id="ev-social">
+          <label class="ev-label">Platform</label>
+          <div class="ev-platform-grid">
+            <button class="ev-platform active" data-platform="Facebook">📘 Facebook</button>
+            <button class="ev-platform" data-platform="Instagram">📷 Instagram</button>
+            <button class="ev-platform" data-platform="WhatsApp">💬 WhatsApp</button>
+            <button class="ev-platform" data-platform="LinkedIn">💼 LinkedIn</button>
+            <button class="ev-platform" data-platform="Telegram">✈️ Telegram</button>
+            <button class="ev-platform" data-platform="Other">🌐 Other</button>
+          </div>
+          <label class="ev-label" style="margin-top:12px;">Profile URL or username</label>
+          <input id="evSocialUrl" class="ev-input" type="text" placeholder="https://… or @username" />
+          <label class="ev-label" style="margin-top:10px;">What did they send or say? (optional)</label>
+          <textarea id="evSocialContext" class="ev-input" rows="3" placeholder="Paste their message or describe what happened…"></textarea>
+          <button class="ev-analyze-btn" id="evAnalyzeSocialBtn" style="width:100%;margin-top:8px;">Analyze profile →</button>
+          <div class="ev-result" id="evSocialResult"></div>
+        </div>
+
+        <!-- CRYPTO TAB -->
+        <div class="ev-pane" id="ev-crypto">
+          <label class="ev-label">Crypto addresses — up to 5</label>
+          <p class="ev-hint">Enter any wallet addresses they asked you to send funds to. AI identifies the chain and checks for known scam wallets.</p>
+          <div id="evCryptoList"></div>
+          <button class="ev-add-btn" id="evAddCryptoBtn">+ Add address</button>
+          <button class="ev-analyze-btn" id="evAnalyzeCryptoBtn" style="width:100%;margin-top:10px;">Analyze addresses →</button>
+          <div class="ev-result" id="evCryptoResult"></div>
+        </div>
+
+        <!-- LOG TAB -->
+        <div class="ev-pane" id="ev-log">
+          <div id="evLog">
+            <p class="ev-empty">No evidence submitted yet.</p>
           </div>
         </div>
 
-        <div class="transcript" id="transcript"></div>
-      </div>
-    </section>
-
-    <aside class="card">
-      <div class="card-header">
-        <h2>Decision panel</h2>
-        <p class="muted">Guided mode fills structured answers directly. Realtime mode can be scored from the transcript.</p>
-        <hr class="soft" />
-      </div>
-      <div class="card-body stack">
-        <div class="kpis">
-          <div class="kpi"><h3>Score</h3><strong id="scoreValue">0</strong></div>
-          <div class="kpi"><h3>Level</h3><strong id="levelValue">Minimal</strong></div>
-          <div class="kpi"><h3>Recommendation</h3><strong id="recommendationValue">Not evaluated</strong></div>
-          <div class="kpi"><h3>Playbook</h3><strong id="playbookValue">—</strong></div>
-        </div>
-
-        <div>
-          <h3>Triggered factors</h3>
-          <div class="factor-list" id="factorList"></div>
-        </div>
-
-        <div>
-          <h3>Next steps</h3>
-          <div class="next-steps" id="nextSteps"></div>
-        </div>
-      </div>
+      </div><!-- /ev-body -->
     </aside>
+
   </main>
 
   <script src="/app.js"></script>
+  <script src="/evidence.js"></script>
 </body>
 </html>
