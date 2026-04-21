@@ -1,120 +1,1107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin — Fraud Response Voice Agent</title>
-  <link rel="stylesheet" href="/styles.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RISKXLABS / FRAUD AGENT — ADMIN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+input, textarea, button, select {
+  -webkit-appearance: none; appearance: none;
+  background-color: transparent; color: inherit; border: none; font: inherit;
+}
+input:-webkit-autofill, input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #070d0f inset !important;
+  -webkit-text-fill-color: #a8c4c8 !important;
+}
+
+:root {
+  --bg:        #070d0f;
+  --bg2:       #09110f;
+  --card:      #0d1a1c;
+  --card2:     #101f21;
+  --border:    #182e32;
+  --border-hi: #244448;
+  --teal:      #2dd4bf;
+  --teal-dim:  rgba(45,212,191,0.10);
+  --teal-glow: rgba(45,212,191,0.05);
+  --teal-mid:  rgba(45,212,191,0.20);
+  --green:     #00e87a;
+  --green-dim: rgba(0,232,122,0.10);
+  --red:       #ff4d4d;
+  --red-dim:   rgba(255,77,77,0.10);
+  --amber:     #f5a623;
+  --amber-dim: rgba(245,166,35,0.10);
+  --purple:    #a78bfa;
+  --purple-dim:rgba(167,139,250,0.10);
+  --text:      #a8c4c8;
+  --text-hi:   #d4e8ea;
+  --text-dim:  #4a6a70;
+  --mono:      'Share Tech Mono', monospace;
+  --cond:      'Barlow Condensed', sans-serif;
+  --body:      'Barlow', sans-serif;
+}
+
+html, body { background: #070d0f; color: var(--text); font-family: var(--body); font-size: 13px; line-height: 1.5; min-height: 100vh; }
+
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 999;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px);
+}
+body::after {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 0%, rgba(17,90,80,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 100%, rgba(10,60,55,0.14) 0%, transparent 60%);
+}
+
+/* ── LAYOUT ── */
+.shell { position: relative; z-index: 1; display: grid; grid-template-columns: 210px 1fr; min-height: 100vh; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  background: linear-gradient(180deg, #09110f 0%, #070d0e 100%);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.sb-brand { padding: 18px 16px 14px; border-bottom: 1px solid var(--border); }
+.sb-breadcrumb { font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; color: var(--text-dim); margin-bottom: 6px; }
+.sb-breadcrumb span { color: var(--teal); }
+.sb-title { font-family: var(--cond); font-size: 20px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--text-hi); line-height: 1.1; }
+.sb-sub { font-family: var(--cond); font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: var(--teal); margin-top: 2px; }
+
+.nav-sec { padding: 14px 8px 4px; }
+.nav-lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); padding: 0 8px; margin-bottom: 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 4px;
+  cursor: pointer; font-family: var(--mono); font-size: 11px; letter-spacing: 0.5px;
+  color: var(--text-dim); text-decoration: none; transition: all 0.15s; border: 1px solid transparent;
+}
+.nav-item:hover { color: var(--text); background: var(--teal-glow); border-color: var(--border); }
+.nav-item.active { color: var(--teal); background: var(--teal-dim); border-color: rgba(45,212,191,0.25); }
+.nav-badge {
+  margin-left: auto; font-family: var(--mono); font-size: 9px; font-weight: 700;
+  background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,77,77,0.25);
+  border-radius: 3px; padding: 1px 5px; letter-spacing: 0.5px;
+}
+.nav-badge.amber { background: var(--amber-dim); color: var(--amber); border-color: rgba(245,166,35,0.25); }
+
+.sb-footer { margin-top: auto; padding: 14px; border-top: 1px solid var(--border); }
+.sb-user { display: flex; align-items: center; gap: 8px; background: var(--card2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-family: var(--mono); font-size: 10px; color: var(--text-dim); }
+.sb-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: glow 2s ease-in-out infinite; flex-shrink: 0; }
+@keyframes glow { 0%,100%{opacity:1;box-shadow:0 0 6px var(--green)} 50%{opacity:0.4;box-shadow:0 0 2px var(--green)} }
+
+/* ── MAIN ── */
+.main { display: flex; flex-direction: column; overflow: auto; background: var(--bg); }
+
+/* ── TOPBAR ── */
+.topbar {
+  background: linear-gradient(90deg, #09110f, #080e10);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px; height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.tb-left { display: flex; flex-direction: column; }
+.tb-path { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; }
+.tb-path span { color: var(--teal); }
+.tb-title { font-family: var(--cond); font-size: 16px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-hi); line-height: 1.1; }
+.tb-right { display: flex; align-items: center; gap: 8px; }
+.tb-time { font-family: var(--mono); font-size: 10px; color: var(--text-dim); letter-spacing: 0.5px; margin-right: 6px; }
+
+/* ── BUTTONS ── */
+.btn { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 6px 14px; border-radius: 3px; border: 1px solid var(--border-hi); background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.15s; }
+.btn:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-glow); }
+.btn-teal  { border-color: rgba(45,212,191,0.5); color: var(--teal); background: var(--teal-dim); }
+.btn-teal:hover { background: var(--teal-mid); box-shadow: 0 0 12px rgba(45,212,191,0.15); }
+.btn-green { border-color: rgba(0,232,122,0.4); color: var(--green); background: var(--green-dim); }
+.btn-green:hover { background: rgba(0,232,122,0.18); }
+.btn-red   { border-color: rgba(255,77,77,0.4); color: var(--red); background: var(--red-dim); }
+.btn-amber { border-color: rgba(245,166,35,0.4); color: var(--amber); background: var(--amber-dim); }
+
+/* ── CONTENT ── */
+.content { padding: 20px 22px; flex: 1; }
+
+/* ── CARDS ── */
+.card { background: linear-gradient(135deg, #0d1a1c 0%, #0a1416 100%); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.card-hd { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: linear-gradient(90deg, #101f21, #0c1a1c); }
+.card-title { font-family: var(--cond); font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--text-hi); display: flex; align-items: center; gap: 8px; }
+.card-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 5px var(--teal); }
+.card-body { padding: 16px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.three-col { display: grid; grid-template-columns: 3fr 2fr; gap: 12px; margin-bottom: 14px; }
+
+/* ── STATS ── */
+.stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 18px; }
+.stat { background: linear-gradient(135deg, #0d1a1c 0%, #091214 100%); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; position: relative; overflow: hidden; }
+.stat::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; }
+.stat.teal::after  { background: var(--teal); }
+.stat.green::after { background: var(--green); }
+.stat.amber::after { background: var(--amber); }
+.stat.red::after   { background: var(--red); }
+.stat-lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; }
+.stat-val { font-family: var(--mono); font-size: 28px; font-weight: 400; line-height: 1; margin-bottom: 3px; }
+.stat.teal  .stat-val { color: var(--text-hi); }
+.stat.green .stat-val { color: var(--green); }
+.stat.amber .stat-val { color: var(--amber); }
+.stat.red   .stat-val { color: var(--red); }
+.stat-delta { font-family: var(--mono); font-size: 10px; color: var(--text-dim); }
+
+/* ── CASES TABLE ── */
+.case-filters { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.case-table { width: 100%; border-collapse: collapse; }
+.case-table th { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); padding: 9px 14px; text-align: left; border-bottom: 1px solid var(--border); background: var(--card2); white-space: nowrap; }
+.case-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; transition: background 0.12s; }
+.case-table tr:hover td { background: var(--teal-glow); cursor: pointer; }
+.case-table tr:last-child td { border-bottom: none; }
+.case-id { font-family: var(--mono); font-size: 11px; color: var(--teal); letter-spacing: 0.5px; white-space: nowrap; }
+.case-user-name { font-family: var(--mono); font-size: 11px; color: var(--text-hi); margin-bottom: 2px; }
+.case-user-contact { font-family: var(--mono); font-size: 9px; color: var(--text-dim); }
+.case-type-badge { font-family: var(--mono); font-size: 9px; letter-spacing: 0.8px; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; white-space: nowrap; }
+.case-type-badge.remote { background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(45,212,191,0.2); }
+.case-type-badge.wire   { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); }
+.case-risk-val { font-family: var(--mono); font-size: 14px; white-space: nowrap; }
+.case-risk-val.high   { color: var(--red); }
+.case-risk-val.medium { color: var(--amber); }
+.case-risk-val.low    { color: var(--green); }
+.case-risk-val.null-val { color: var(--text-dim); }
+.case-status { font-family: var(--mono); font-size: 9px; letter-spacing: 0.8px; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; white-space: nowrap; }
+.case-status.open       { background: var(--teal-dim);   color: var(--teal);   border: 1px solid rgba(45,212,191,0.2); }
+.case-status.complete   { background: var(--green-dim);  color: var(--green);  border: 1px solid rgba(0,232,122,0.2); }
+.case-status.escalated  { background: var(--red-dim);    color: var(--red);    border: 1px solid rgba(255,77,77,0.2); }
+.case-status.reviewing  { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(245,166,35,0.2); }
+.case-status.abandoned  { background: rgba(255,255,255,0.04); color: var(--text-dim); border: 1px solid var(--border); }
+.case-status.closed     { background: rgba(255,255,255,0.04); color: var(--text-dim); border: 1px solid var(--border); }
+.case-empty { font-family: var(--mono); font-size: 10px; color: var(--text-dim); text-align: center; padding: 48px; letter-spacing: 1px; }
+
+/* ── CASE DETAIL PANEL ── */
+.case-detail {
+  position: fixed; top: 0; right: 0; bottom: 0; width: 480px;
+  background: linear-gradient(180deg, #0d1a1c, #091416);
+  border-left: 1px solid var(--border-hi);
+  z-index: 300; display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+  box-shadow: -8px 0 32px rgba(0,0,0,0.4);
+}
+.case-detail.open { transform: translateX(0); }
+.cd-header { padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--card2); display: flex; align-items: flex-start; justify-content: space-between; flex-shrink: 0; }
+.cd-case-id { font-family: var(--cond); font-size: 18px; font-weight: 700; letter-spacing: 2px; color: var(--text-hi); }
+.cd-case-label { font-family: var(--mono); font-size: 9px; color: var(--teal); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+.cd-close { font-family: var(--mono); font-size: 11px; color: var(--text-dim); cursor: pointer; padding: 4px 8px; border: 1px solid var(--border); border-radius: 3px; background: transparent; transition: all 0.15s; }
+.cd-close:hover { color: var(--text); border-color: var(--border-hi); }
+.cd-body { flex: 1; overflow-y: auto; padding: 18px 20px; }
+.cd-section { margin-bottom: 20px; }
+.cd-section-lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.cd-field { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.cd-field:last-child { border-bottom: none; }
+.cd-field-key { font-family: var(--mono); font-size: 10px; color: var(--text-dim); letter-spacing: 0.5px; }
+.cd-field-val { font-family: var(--mono); font-size: 10px; color: var(--text-hi); text-align: right; max-width: 260px; word-break: break-all; }
+.cd-score-big { font-family: var(--mono); font-size: 48px; font-weight: 400; line-height: 1; margin: 10px 0 4px; }
+.cd-score-big.high   { color: var(--red);   text-shadow: 0 0 20px rgba(255,77,77,0.4); }
+.cd-score-big.medium { color: var(--amber); text-shadow: 0 0 20px rgba(245,166,35,0.3); }
+.cd-score-big.low    { color: var(--green); text-shadow: 0 0 20px rgba(0,232,122,0.3); }
+.cd-score-big.null-score { color: var(--text-dim); }
+.cd-level { font-family: var(--cond); font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+.cd-score-bar-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 12px; }
+.cd-score-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s; }
+.cd-score-bar-fill.high   { background: var(--red); }
+.cd-score-bar-fill.medium { background: var(--amber); }
+.cd-score-bar-fill.low    { background: var(--green); }
+.cd-factor-pill { font-family: var(--mono); font-size: 9px; letter-spacing: 0.5px; padding: 2px 7px; border-radius: 3px; display: inline-block; margin: 2px; }
+.cd-factor-pill.hit { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,77,77,0.25); }
+.cd-factor-pill.miss { background: var(--card2); color: var(--text-dim); border: 1px solid var(--border); }
+.cd-transcript-item { padding: 8px 0; border-bottom: 1px solid var(--border); display: flex; gap: 10px; }
+.cd-transcript-item:last-child { border-bottom: none; }
+.cd-t-role { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; white-space: nowrap; flex-shrink: 0; height: fit-content; margin-top: 1px; }
+.cd-t-role.agent { background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(45,212,191,0.2); }
+.cd-t-role.user  { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,232,122,0.2); }
+.cd-t-text { font-size: 12px; color: var(--text); line-height: 1.6; font-weight: 300; }
+.cd-notes { width: 100%; background: var(--bg) !important; border: 1px solid var(--border-hi); border-radius: 4px; padding: 9px 11px; font-family: var(--mono); font-size: 11px; color: var(--text-hi); outline: none; resize: vertical; min-height: 72px; transition: border-color 0.2s; }
+.cd-notes:focus { border-color: var(--teal); }
+.cd-notes::placeholder { color: var(--text-dim); }
+.cd-footer { padding: 14px 20px; border-top: 1px solid var(--border); background: var(--card2); display: flex; gap: 8px; flex-shrink: 0; }
+.cd-disposition-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+
+/* ── PLAYBOOK EDITOR ── */
+.pb-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--card2); }
+.pb-tab { padding: 9px 18px; font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; color: var(--text-dim); border-bottom: 2px solid transparent; transition: all 0.15s; background: transparent; border-top: none; border-left: none; border-right: none; }
+.pb-tab:hover { color: var(--text); }
+.pb-tab.active { color: var(--teal); border-bottom-color: var(--teal); background: var(--card); }
+.factor-editor { background: var(--card2); border: 1px solid var(--border); border-radius: 5px; padding: 11px 13px; margin-bottom: 6px; }
+.factor-editor .split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+.f-lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; display: block; }
+.f-input { width: 100%; background: var(--bg) !important; border: 1px solid var(--border-hi); border-radius: 4px; padding: 8px 11px; font-family: var(--mono); font-size: 11px; color: var(--text-hi); outline: none; transition: border-color 0.2s; margin-bottom: 8px; }
+.f-input:focus { border-color: var(--teal); }
+.f-input::placeholder { color: var(--text-dim); }
+.factor-editor-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.factor-type-pill { font-family: var(--mono); font-size: 9px; letter-spacing: 0.8px; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(45,212,191,0.2); }
+
+/* ── FORM ELEMENTS ── */
+.form-grp { margin-bottom: 12px; }
+.form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ── SCORE DIST ── */
+.score-dist { display: flex; gap: 2px; align-items: flex-end; height: 56px; }
+
+/* ── QUALITY QUEUE ITEMS ── */
+.q-item { padding: 13px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: flex-start; transition: background 0.15s; }
+.q-item:hover { background: var(--teal-glow); }
+.q-item:last-child { border-bottom: none; }
+.q-icon { width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; border: 1px solid transparent; }
+.q-icon.warn  { background: var(--amber-dim); border-color: rgba(245,166,35,0.2); }
+.q-icon.info  { background: var(--teal-dim);  border-color: rgba(45,212,191,0.2); }
+.q-icon.ok    { background: var(--green-dim); border-color: rgba(0,232,122,0.2); }
+.q-title { font-family: var(--mono); font-size: 11px; color: var(--text); margin-bottom: 3px; }
+.q-desc  { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+.q-time  { font-family: var(--mono); font-size: 9px; color: var(--text-dim); flex-shrink: 0; white-space: nowrap; }
+.q-actions { display: flex; gap: 5px; margin-top: 8px; }
+
+/* ── ANSWER PATTERNS ── */
+.ap-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.ap-row:last-child { border-bottom: none; }
+.ap-q { font-family: var(--mono); font-size: 10px; color: var(--text-dim); flex: 1; letter-spacing: 0.3px; }
+.ap-bars { display: flex; gap: 2px; width: 110px; height: 6px; border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+.ap-yes { background: var(--red); }
+.ap-no  { background: var(--green); }
+.ap-uns { background: var(--text-dim); opacity: 0.4; }
+.ap-pct { font-family: var(--mono); font-size: 9px; white-space: nowrap; flex-shrink: 0; width: 62px; text-align: right; }
+
+/* ── TOGGLE ── */
+.toggle-wrap { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 10px; color: var(--text-dim); cursor: pointer; letter-spacing: 0.5px; }
+.toggle { width: 32px; height: 17px; background: var(--bg); border-radius: 9px; position: relative; transition: background 0.2s; border: 1px solid var(--border-hi); }
+.toggle.on { background: var(--teal-dim); border-color: rgba(45,212,191,0.4); }
+.toggle::after { content: ''; position: absolute; width: 11px; height: 11px; background: var(--text-dim); border-radius: 50%; top: 2px; left: 2px; transition: transform 0.2s, background 0.2s; }
+.toggle.on::after { transform: translateX(15px); background: var(--teal); box-shadow: 0 0 5px rgba(45,212,191,0.5); }
+
+/* ── MESSAGE ── */
+.admin-message { font-family: var(--mono); font-size: 10px; letter-spacing: 0.5px; padding: 8px 12px; border-radius: 4px; margin-top: 8px; display: none; }
+.admin-message.show-ok  { display: block; background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,232,122,0.3); }
+.admin-message.show-err { display: block; background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(255,77,77,0.3); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--teal); }
+
+/* Placeholder */
+.placeholder { color: var(--text-dim); text-align: center; padding: 60px; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; }
+
+/* Case overlay backdrop */
+#caseOverlay { display: none; position: fixed; inset: 0; z-index: 299; background: rgba(0,0,0,0.4); }
+</style>
 </head>
 <body>
-  <header class="header">
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo"></div>
-        <div class="title">
-          <h1>Admin Playbook Builder</h1>
-          <p>Choose predefined factors or create custom ones for the MVP.</p>
-        </div>
-      </div>
-      <nav class="nav-links">
-        <a href="/">Agent</a>
-      </nav>
+<div class="shell">
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-breadcrumb"><span>RISKXLABS</span> / FRAUD AGENT</div>
+    <div class="sb-title">ADMIN<br>CONSOLE</div>
+    <div class="sb-sub">— PLAYBOOK OPS —</div>
+  </div>
+
+  <div class="nav-sec">
+    <div class="nav-lbl">// OVERVIEW</div>
+    <a class="nav-item active" href="#" onclick="showView('dashboard');return false;">▪ DASHBOARD</a>
+    <a class="nav-item" href="#" onclick="showView('cases');return false;">▪ CASES <span class="nav-badge" id="caseBadge">—</span></a>
+    <a class="nav-item" href="#" onclick="showView('sessions');return false;">▪ SESSIONS</a>
+  </div>
+
+  <div class="nav-sec">
+    <div class="nav-lbl">// PLAYBOOKS</div>
+    <a class="nav-item" href="#" onclick="showView('editor');return false;">▪ FACTOR EDITOR</a>
+    <a class="nav-item" href="#" onclick="showView('patterns');return false;">▪ ANSWER PATTERNS</a>
+  </div>
+
+  <div class="nav-sec">
+    <div class="nav-lbl">// CONFIG</div>
+    <a class="nav-item" href="#" onclick="showView('settings');return false;">▪ SETTINGS</a>
+  </div>
+
+  <div class="nav-sec">
+    <div class="nav-lbl">// NAVIGATE</div>
+    <a class="nav-item" href="/">▪ AGENT UI →</a>
+  </div>
+
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-dot"></div>
+      <span id="sbUserLabel">fraud-ops@riskxlabs</span>
     </div>
-  </header>
+  </div>
+</nav>
 
-  <main class="shell" style="grid-template-columns: 1fr;">
-    <section class="card">
-      <div class="card-header">
-        <h2>Playbook editor</h2>
-        <p class="muted">Server persistence uses Cloudflare KV when configured.</p>
-        <hr class="soft" />
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-path"><span>RISKXLABS</span> / FRAUD AGENT / <span id="tbPath">DASHBOARD</span></div>
+      <div class="tb-title" id="tbTitle">DASHBOARD</div>
+    </div>
+    <div class="tb-right">
+      <div class="tb-time" id="clock">—</div>
+      <button class="btn" onclick="reloadAll()">↺ RELOAD</button>
+      <button class="btn btn-teal" onclick="savePlaybooks()">⬆ DEPLOY</button>
+    </div>
+  </div>
+
+  <!-- ── DASHBOARD ── -->
+  <div class="content" id="v-dashboard">
+    <div class="stats-row">
+      <div class="stat teal"><div class="stat-lbl">TOTAL CASES</div><div class="stat-val" id="statTotal">—</div><div class="stat-delta" id="statTotalSub">LOADING…</div></div>
+      <div class="stat green"><div class="stat-lbl">COMPLETE</div><div class="stat-val" id="statComplete">—</div><div class="stat-delta">SESSIONS SCORED</div></div>
+      <div class="stat amber"><div class="stat-lbl">OPEN / ACTIVE</div><div class="stat-val" id="statOpen">—</div><div class="stat-delta">IN PROGRESS</div></div>
+      <div class="stat red"><div class="stat-lbl">HIGH RISK</div><div class="stat-val" id="statHighRisk">—</div><div class="stat-delta">SCORE ≥ 60</div></div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-hd">
+          <div class="card-title"><div class="card-dot"></div>RECENT CASES</div>
+          <button class="btn btn-teal" style="font-size:9px;padding:4px 9px;" onclick="showView('cases')">VIEW ALL →</button>
+        </div>
+        <div id="dashRecentCases"><div class="placeholder">LOADING CASES…</div></div>
       </div>
-      <div class="card-body stack">
-        <div class="split">
-          <div>
-            <label for="adminToken">Admin bearer token</label>
-            <input id="adminToken" type="password" placeholder="Required to save to /api/playbooks" />
-          </div>
-          <div>
-            <label for="adminPlaybookSelect">Select playbook</label>
-            <select id="adminPlaybookSelect"></select>
-          </div>
-        </div>
 
-        <div class="split">
-          <div>
-            <label for="playbookName">Playbook name</label>
-            <input id="playbookName" />
+      <div class="card">
+        <div class="card-hd"><div class="card-title"><div class="card-dot"></div>SCORE DISTRIBUTION — TODAY</div></div>
+        <div class="card-body">
+          <div class="stat-lbl" style="margin-bottom:6px;">SESSIONS BY RISK SCORE BRACKET</div>
+          <div class="score-dist" id="scoreDist"></div>
+          <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text-dim);margin-top:4px;"><span>0</span><span>LOW</span><span>MOD</span><span>HIGH</span><span>100</span></div>
+          <div style="display:flex;gap:16px;margin-top:14px;font-family:var(--mono);font-size:10px;" id="scoreDistLegend">
+            <span style="color:var(--green);">● LOW</span>
+            <span style="color:var(--amber);">● MODERATE</span>
+            <span style="color:var(--red);">● HIGH</span>
           </div>
-          <div>
-            <label for="playbookDescription">Description</label>
-            <input id="playbookDescription" />
-          </div>
+          <div style="margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--text-dim);" id="scoreDistAvg">AVG SCORE — / 100</div>
         </div>
-
-        <div class="split">
-          <div>
-            <label for="thresholdLow">Low threshold</label>
-            <input id="thresholdLow" type="number" />
-          </div>
-          <div>
-            <label for="thresholdModerate">Moderate threshold</label>
-            <input id="thresholdModerate" type="number" />
-          </div>
-        </div>
-
-        <div class="split">
-          <div>
-            <label for="thresholdHigh">High threshold</label>
-            <input id="thresholdHigh" type="number" />
-          </div>
-          <div>
-            <label for="predefinedFactorSelect">Add predefined factor</label>
-            <div class="row">
-              <select id="predefinedFactorSelect"></select>
-              <button class="btn-secondary" id="addPredefinedBtn" type="button">Add</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="stack">
-          <h3>Current factors</h3>
-          <div class="admin-list" id="factorEditors"></div>
-        </div>
-
-        <div class="factor-editor stack">
-          <h3>Create custom factor</h3>
-          <div class="split">
-            <div>
-              <label for="customName">Name</label>
-              <input id="customName" />
-            </div>
-            <div>
-              <label for="customWeight">Weight</label>
-              <input id="customWeight" type="number" value="20" />
-            </div>
-          </div>
-          <div>
-            <label for="customQuestion">Question</label>
-            <input id="customQuestion" />
-          </div>
-          <div>
-            <label for="customHint">Resolution hint</label>
-            <input id="customHint" />
-          </div>
-          <button class="btn-secondary" id="addCustomBtn" type="button">Add custom factor</button>
-        </div>
-
-        <div class="row">
-          <button class="btn-primary" id="saveBtn" type="button">Save playbooks</button>
-          <button class="btn-secondary" id="resetBtn" type="button">Reload from server</button>
-        </div>
-
-        <div id="adminMessage" class="muted"></div>
       </div>
-    </section>
-  </main>
+    </div>
+  </div>
 
-  <script src="/admin.js"></script>
+  <!-- ── CASES ── -->
+  <div class="content" id="v-cases" style="display:none;">
+    <div class="case-filters">
+      <button class="btn btn-teal" onclick="filterCases('all')">ALL</button>
+      <button class="btn" onclick="filterCases('open')">OPEN</button>
+      <button class="btn" onclick="filterCases('complete')">COMPLETE</button>
+      <button class="btn" onclick="filterCases('escalated')">ESCALATED</button>
+      <button class="btn" onclick="filterCases('abandoned')">ABANDONED</button>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title"><div class="card-dot"></div>CASE REGISTRY</div>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text-dim);">CLICK ROW TO OPEN DETAIL</span>
+      </div>
+      <div id="caseTableWrap">
+        <div class="placeholder">LOADING CASES…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PLAYBOOK EDITOR ── -->
+  <div class="content" id="v-editor" style="display:none;">
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-hd">
+        <div class="card-title"><div class="card-dot"></div>PLAYBOOK EDITOR</div>
+        <div style="display:flex;gap:6px;">
+          <select id="adminPlaybookSelect" class="btn" style="cursor:pointer;"></select>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <!-- Token -->
+        <div class="form-grp">
+          <label class="f-lbl">ADMIN BEARER TOKEN</label>
+          <input class="f-input" id="adminToken" type="password" placeholder="YOUR BEARER TOKEN" />
+        </div>
+        <div class="form-2col" style="margin-bottom:12px;">
+          <div class="form-grp">
+            <label class="f-lbl">PLAYBOOK NAME</label>
+            <input class="f-input" id="playbookName" placeholder="PLAYBOOK NAME" />
+          </div>
+          <div class="form-grp">
+            <label class="f-lbl">DESCRIPTION</label>
+            <input class="f-input" id="playbookDescription" placeholder="DESCRIPTION" />
+          </div>
+        </div>
+        <div class="form-2col" style="margin-bottom:14px;">
+          <div class="form-grp">
+            <label class="f-lbl">LOW THRESHOLD</label>
+            <input class="f-input" id="thresholdLow" type="number" value="20" />
+          </div>
+          <div class="form-grp">
+            <label class="f-lbl">MODERATE THRESHOLD</label>
+            <input class="f-input" id="thresholdModerate" type="number" value="40" />
+          </div>
+          <div class="form-grp">
+            <label class="f-lbl">HIGH THRESHOLD</label>
+            <input class="f-input" id="thresholdHigh" type="number" value="60" />
+          </div>
+        </div>
+
+        <!-- Add predefined -->
+        <div style="display:flex;gap:8px;margin-bottom:14px;align-items:flex-end;">
+          <div style="flex:1;">
+            <label class="f-lbl">ADD PREDEFINED FACTOR</label>
+            <select id="predefinedFactorSelect" class="f-input" style="margin-bottom:0;"></select>
+          </div>
+          <button class="btn btn-teal" id="addPredefinedBtn">ADD</button>
+        </div>
+
+        <!-- Factor editors -->
+        <div id="factorEditors"></div>
+
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:8px;">
+          <div class="card-title" style="margin-bottom:12px;"><div class="card-dot"></div>CREATE CUSTOM FACTOR</div>
+          <div class="form-2col">
+            <div class="form-grp"><label class="f-lbl">NAME</label><input class="f-input" id="customName" placeholder="e.g. GIFT_CARD_REQUEST" /></div>
+            <div class="form-grp"><label class="f-lbl">WEIGHT</label><input class="f-input" id="customWeight" type="number" value="20" /></div>
+          </div>
+          <div class="form-grp"><label class="f-lbl">QUESTION</label><input class="f-input" id="customQuestion" placeholder="DID THEY ASK YOU TO…" /></div>
+          <div class="form-grp"><label class="f-lbl">RESOLUTION HINT</label><input class="f-input" id="customHint" placeholder="CHECK FOR…" /></div>
+          <button class="btn btn-amber" id="addCustomBtn">+ ADD CUSTOM FACTOR</button>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+          <button class="btn btn-teal" id="saveBtn" style="flex:1;">⬆ SAVE & DEPLOY PLAYBOOKS</button>
+          <button class="btn" id="resetBtn">↺ RELOAD FROM SERVER</button>
+        </div>
+        <div id="adminMessage" class="admin-message"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ANSWER PATTERNS ── -->
+  <div class="content" id="v-patterns" style="display:none;">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-hd"><div class="card-title"><div class="card-dot"></div>REMOTE ACCESS — ANSWER DIST.</div></div>
+        <div class="card-body" id="remPat"></div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-title"><div class="card-dot"></div>WIRE TRANSFER — ANSWER DIST.</div></div>
+        <div class="card-body" id="wirePat"></div>
+      </div>
+    </div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);letter-spacing:1px;text-align:center;margin-top:6px;">
+      <span style="color:var(--red);">■ YES (RISK)</span> &nbsp;
+      <span style="color:var(--green);">■ NO (SAFE)</span> &nbsp;
+      <span style="color:var(--text-dim);">■ UNSURE</span>
+    </div>
+  </div>
+
+  <!-- ── SETTINGS ── -->
+  <div class="content" id="v-settings" style="display:none;">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-hd"><div class="card-title"><div class="card-dot"></div>GENERAL CONFIG</div></div>
+        <div class="card-body">
+          <div class="form-grp"><label class="f-lbl">ADMIN BEARER TOKEN</label><input class="f-input" id="settingsToken" type="password" placeholder="••••••••••••••••••••" oninput="persistToken(this.value)" /></div>
+          <div class="form-grp"><label class="f-lbl">OPENAI REALTIME MODEL</label><input class="f-input" value="gpt-realtime" readonly style="color:var(--text-dim);" /></div>
+          <div class="form-grp"><label class="f-lbl">CLOUDFLARE KV — PLAYBOOKS</label><input class="f-input" value="PLAYBOOKS (configured)" readonly style="color:var(--text-dim);" /></div>
+          <div class="form-grp"><label class="f-lbl">CLOUDFLARE KV — CASES</label><input class="f-input" value="CASES (configured)" readonly style="color:var(--text-dim);" /></div>
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:10px;">
+            <label class="toggle-wrap" onclick="this.querySelector('.toggle').classList.toggle('on')"><div class="toggle on"></div>AUTO QUALITY SCAN</label>
+            <label class="toggle-wrap" onclick="this.querySelector('.toggle').classList.toggle('on')"><div class="toggle on"></div>REQUIRE ANALYST REVIEW BEFORE DEPLOY</label>
+            <label class="toggle-wrap" onclick="this.querySelector('.toggle').classList.toggle('on')"><div class="toggle on"></div>SERVER PERSISTENCE (KV)</label>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-title"><div class="card-dot"></div>ALERTS & ESCALATION</div></div>
+        <div class="card-body">
+          <div class="form-grp"><label class="f-lbl">ALERT EMAIL</label><input class="f-input" placeholder="fraud-ops@riskxlabs.com" /></div>
+          <div class="form-grp"><label class="f-lbl">SKIP RATE THRESHOLD (%)</label><input class="f-input" type="number" value="40" /></div>
+          <div class="form-grp"><label class="f-lbl">SLACK / WEBHOOK URL</label><input class="f-input" placeholder="https://hooks.slack.com/…" /></div>
+          <button class="btn btn-teal" style="margin-top:4px;">SAVE ALERTS</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SESSIONS (placeholder) ── -->
+  <div class="content" id="v-sessions" style="display:none;">
+    <div class="card"><div class="placeholder">SESSION LOG — CONNECT ADDITIONAL KV STORE TO ENABLE FULL SESSION HISTORY.</div></div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ── CASE DETAIL PANEL ── -->
+<div class="case-detail" id="caseDetail">
+  <div class="cd-header">
+    <div>
+      <div class="cd-case-label">CASE DETAIL</div>
+      <div class="cd-case-id" id="cdCaseId">—</div>
+    </div>
+    <button class="cd-close" onclick="closeCase()">✕ CLOSE</button>
+  </div>
+
+  <div class="cd-body">
+    <div class="cd-section">
+      <div class="cd-section-lbl">// USER INFORMATION</div>
+      <div class="cd-field"><span class="cd-field-key">NAME</span><span class="cd-field-val" id="cdName">—</span></div>
+      <div class="cd-field"><span class="cd-field-key">EMAIL</span><span class="cd-field-val" id="cdEmail">—</span></div>
+      <div class="cd-field"><span class="cd-field-key">PHONE</span><span class="cd-field-val" id="cdPhone">—</span></div>
+      <div class="cd-field"><span class="cd-field-key">PLAYBOOK</span><span class="cd-field-val" id="cdPlaybook">—</span></div>
+      <div class="cd-field"><span class="cd-field-key">OPENED</span><span class="cd-field-val" id="cdOpened">—</span></div>
+      <div class="cd-field"><span class="cd-field-key">STATUS</span><span class="cd-field-val" id="cdStatus">—</span></div>
+    </div>
+
+    <div class="cd-section">
+      <div class="cd-section-lbl">// RISK ASSESSMENT</div>
+      <div class="cd-score-big" id="cdScoreBig">—</div>
+      <div class="cd-level" id="cdLevel">—</div>
+      <div class="cd-score-bar-track"><div class="cd-score-bar-fill" id="cdScoreBar" style="width:0%"></div></div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-bottom:10px;" id="cdRecommendation">—</div>
+      <div id="cdFactorPills"></div>
+    </div>
+
+    <div class="cd-section" id="cdTranscriptSection">
+      <div class="cd-section-lbl">// TRANSCRIPT (<span id="cdTranscriptCount">0</span> TURNS)</div>
+      <div id="cdTranscript" style="max-height:200px;overflow-y:auto;"></div>
+    </div>
+
+    <div class="cd-section">
+      <div class="cd-section-lbl">// ANALYST DISPOSITION</div>
+      <div class="cd-disposition-row">
+        <button class="btn btn-red"   onclick="setDisposition('CONFIRMED FRAUD')">✓ CONFIRMED FRAUD</button>
+        <button class="btn"           onclick="setDisposition('FALSE POSITIVE')">✗ FALSE POSITIVE</button>
+        <button class="btn btn-amber" onclick="setDisposition('UNDER REVIEW')">◉ UNDER REVIEW</button>
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);margin-bottom:6px;letter-spacing:1px;">ANALYST NOTES</div>
+      <textarea class="cd-notes" id="cdNotes" placeholder="ADD NOTES, FINDINGS, OR FOLLOW-UP ACTIONS…"></textarea>
+      <button class="btn btn-teal" style="width:100%;margin-top:8px;" onclick="saveDisposition()">SAVE NOTES</button>
+    </div>
+  </div>
+
+  <div class="cd-footer">
+    <button class="btn btn-red" style="flex:1;" onclick="escalateCase()">⚠ ESCALATE</button>
+    <button class="btn btn-green" onclick="closeCase()">◈ CLOSE PANEL</button>
+  </div>
+</div>
+<div id="caseOverlay" onclick="closeCase()"></div>
+
+<script>
+// ── CLOCK ──
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleDateString('en-US',{month:'short',day:'numeric'}).toUpperCase() + ', ' +
+    now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
+}
+updateClock(); setInterval(updateClock, 1000);
+
+// ── NAV ──
+const VIEWS = ['dashboard','cases','editor','patterns','settings','sessions'];
+const TITLES = {
+  dashboard: 'DASHBOARD',
+  cases:     'CASE REGISTRY',
+  editor:    'PLAYBOOK EDITOR',
+  patterns:  'ANSWER PATTERNS',
+  settings:  'SETTINGS',
+  sessions:  'SESSIONS',
+};
+
+function showView(name) {
+  VIEWS.forEach(v => {
+    const el = document.getElementById('v-' + v);
+    if (el) el.style.display = v === name ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tbPath').textContent = TITLES[name] || name.toUpperCase();
+  document.getElementById('tbTitle').textContent = TITLES[name] || name.toUpperCase();
+}
+
+// ── TOKEN PERSISTENCE ──
+function getToken() {
+  return sessionStorage.getItem('rxl_admin_token') || '';
+}
+function persistToken(val) {
+  sessionStorage.setItem('rxl_admin_token', val);
+  // sync to editor token field
+  const ef = document.getElementById('adminToken');
+  if (ef && ef.value !== val) ef.value = val;
+}
+
+function initTokenFields() {
+  const token = getToken();
+  ['adminToken','settingsToken'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = token;
+  });
+  document.getElementById('adminToken')?.addEventListener('input', e => persistToken(e.target.value));
+  document.getElementById('settingsToken')?.addEventListener('input', e => persistToken(e.target.value));
+}
+
+// ── CASES ──
+let allCases = [];
+let selectedCase = null;
+
+async function loadCases() {
+  const token = getToken();
+  if (!token) {
+    document.getElementById('dashRecentCases').innerHTML = '<div class="placeholder">SET ADMIN TOKEN IN SETTINGS TO LOAD CASES.</div>';
+    document.getElementById('caseTableWrap').innerHTML = '<div class="placeholder">SET ADMIN TOKEN IN SETTINGS TO LOAD CASES.</div>';
+    return;
+  }
+
+  try {
+    // Load today's cases
+    const resp = await fetch('/api/cases', { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      document.getElementById('dashRecentCases').innerHTML = `<div class="placeholder">${data.error || 'ERROR LOADING CASES.'}</div>`;
+      return;
+    }
+
+    allCases = data.cases || [];
+    renderDashboardStats();
+    renderDashboardRecent();
+    renderCaseTable(allCases);
+    renderScoreDist(allCases);
+    document.getElementById('caseBadge').textContent = allCases.length;
+
+  } catch(e) {
+    document.getElementById('dashRecentCases').innerHTML = '<div class="placeholder">COULD NOT REACH /api/cases.</div>';
+  }
+}
+
+function renderDashboardStats() {
+  const total    = allCases.length;
+  const complete = allCases.filter(c => c.status === 'complete').length;
+  const open     = allCases.filter(c => c.status === 'open').length;
+  const highRisk = allCases.filter(c => c.score !== null && c.score >= 60).length;
+  document.getElementById('statTotal').textContent    = total;
+  document.getElementById('statTotalSub').textContent = `TODAY'S CASES`;
+  document.getElementById('statComplete').textContent = complete;
+  document.getElementById('statOpen').textContent     = open;
+  document.getElementById('statHighRisk').textContent = highRisk;
+}
+
+function renderDashboardRecent() {
+  const container = document.getElementById('dashRecentCases');
+  const recent = [...allCases].slice(0, 5);
+  if (!recent.length) {
+    container.innerHTML = '<div class="placeholder">NO CASES TODAY.</div>';
+    return;
+  }
+  container.innerHTML = recent.map(c => `
+    <div class="q-item" onclick="openCase('${c.id}')" style="cursor:pointer;">
+      <div style="flex:1;">
+        <div class="q-title">${c.id}</div>
+        <div class="q-desc">${c.user?.first || ''} ${c.user?.last || ''} · ${c.user?.email || ''}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        <span class="case-status ${c.status}">${(c.status||'').toUpperCase()}</span>
+        <span style="font-family:var(--mono);font-size:10px;color:${scoreColor(c.score)};">${c.score !== null ? c.score : '—'}</span>
+      </div>
+    </div>`).join('');
+}
+
+function scoreColor(score) {
+  if (score === null || score === undefined) return 'var(--text-dim)';
+  if (score >= 60) return 'var(--red)';
+  if (score >= 30) return 'var(--amber)';
+  return 'var(--green)';
+}
+
+function scoreLevel(score) {
+  if (score === null || score === undefined) return 'null-score';
+  if (score >= 60) return 'high';
+  if (score >= 30) return 'medium';
+  return 'low';
+}
+
+function renderScoreDist(cases) {
+  const scored = cases.filter(c => c.score !== null);
+  if (!scored.length) {
+    document.getElementById('scoreDist').innerHTML = '<div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);padding:16px;">NO SCORED SESSIONS YET.</div>';
+    return;
+  }
+
+  // Build 20-bucket histogram
+  const buckets = Array(20).fill(0);
+  scored.forEach(c => { const b = Math.min(19, Math.floor(c.score / 5)); buckets[b]++; });
+  const maxB = Math.max(...buckets, 1);
+
+  document.getElementById('scoreDist').innerHTML = buckets.map((v, i) => {
+    const pct = i * 5;
+    const color = pct < 30 ? 'var(--green)' : pct < 60 ? 'var(--amber)' : 'var(--red)';
+    return `<div style="flex:1;min-width:2px;height:${Math.max(2, Math.round(v/maxB*52))}px;background:${color};border-radius:1px 1px 0 0;opacity:0.8"></div>`;
+  }).join('');
+
+  const avg = Math.round(scored.reduce((a, c) => a + c.score, 0) / scored.length);
+  const low = scored.filter(c => c.score < 30).length;
+  const mod = scored.filter(c => c.score >= 30 && c.score < 60).length;
+  const hi  = scored.filter(c => c.score >= 60).length;
+  const pct = n => Math.round(n / scored.length * 100);
+  document.getElementById('scoreDistLegend').innerHTML = `
+    <span style="color:var(--green);">● LOW: ${pct(low)}%</span>
+    <span style="color:var(--amber);">● MOD: ${pct(mod)}%</span>
+    <span style="color:var(--red);">● HIGH: ${pct(hi)}%</span>`;
+  document.getElementById('scoreDistAvg').textContent = `AVG SCORE ${avg} / 100`;
+}
+
+let currentFilter = 'all';
+function filterCases(status) {
+  currentFilter = status;
+  const filtered = status === 'all' ? allCases : allCases.filter(c => c.status === status);
+  renderCaseTable(filtered);
+}
+
+function renderCaseTable(cases) {
+  const wrap = document.getElementById('caseTableWrap');
+  if (!cases.length) {
+    wrap.innerHTML = '<div class="placeholder">NO CASES FOUND.</div>';
+    return;
+  }
+  wrap.innerHTML = `
+    <table class="case-table">
+      <thead>
+        <tr>
+          <th>CASE ID</th><th>USER</th><th>TYPE</th>
+          <th>RISK</th><th>STATUS</th><th>OPENED</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${cases.map(c => `
+          <tr onclick="openCase('${c.id}')">
+            <td><div class="case-id">${c.id}</div></td>
+            <td>
+              <div class="case-user-name">${c.user?.first || ''} ${c.user?.last || ''}</div>
+              <div class="case-user-contact">${c.user?.email || ''}</div>
+            </td>
+            <td><span class="case-type-badge ${c.playbook?.id?.includes('wire') ? 'wire' : 'remote'}">${c.playbook?.id?.includes('wire') ? '🏦 WIRE' : '🖥 REMOTE'}</span></td>
+            <td><div class="case-risk-val ${scoreLevel(c.score)}">${c.score !== null ? c.score : '—'}</div></td>
+            <td><span class="case-status ${c.status || 'open'}">${(c.status || 'open').toUpperCase()}</span></td>
+            <td><div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);">${formatDate(c.createdAt)}</div></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}).toUpperCase() + ', ' +
+         d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
+}
+
+// ── CASE DETAIL ──
+async function openCase(id) {
+  const c = allCases.find(x => x.id === id);
+  if (!c) return;
+  selectedCase = c;
+
+  document.getElementById('cdCaseId').textContent    = c.id;
+  document.getElementById('cdName').textContent      = `${c.user?.first || ''} ${c.user?.last || ''}`.trim() || '—';
+  document.getElementById('cdEmail').textContent     = c.user?.email || '—';
+  document.getElementById('cdPhone').textContent     = c.user?.phone || '—';
+  document.getElementById('cdPlaybook').textContent  = c.playbook?.name || '—';
+  document.getElementById('cdOpened').textContent    = formatDate(c.createdAt);
+  document.getElementById('cdStatus').textContent    = (c.status || '').toUpperCase();
+  document.getElementById('cdNotes').value           = c.analystNotes || '';
+
+  const score    = c.score;
+  const level    = scoreLevel(score);
+  const scoreBig = document.getElementById('cdScoreBig');
+  scoreBig.textContent = score !== null ? score : '—';
+  scoreBig.className   = `cd-score-big ${level}`;
+  document.getElementById('cdLevel').textContent         = score !== null ? level.toUpperCase() + ' RISK' : 'NOT EVALUATED';
+  document.getElementById('cdLevel').style.color         = score !== null ? `var(--${level === 'high' ? 'red' : level === 'medium' ? 'amber' : 'green'})` : 'var(--text-dim)';
+  document.getElementById('cdRecommendation').textContent = c.recommendation || '—';
+
+  const bar = document.getElementById('cdScoreBar');
+  bar.style.width     = (score || 0) + '%';
+  bar.className       = `cd-score-bar-fill ${level}`;
+
+  // Factor pills
+  const pills = document.getElementById('cdFactorPills');
+  const mf = c.matchedFactors || [];
+  pills.innerHTML = mf.length
+    ? mf.map(f => `<span class="cd-factor-pill hit">${f.name}</span>`).join('')
+    : '<span style="font-family:var(--mono);font-size:10px;color:var(--text-dim);">NO FACTORS TRIGGERED</span>';
+
+  // Transcript
+  const tLog = c.transcript || [];
+  document.getElementById('cdTranscriptCount').textContent = tLog.length;
+  document.getElementById('cdTranscript').innerHTML = tLog.length
+    ? tLog.map(t => `
+        <div class="cd-transcript-item">
+          <span class="cd-t-role ${t.role}">${(t.role||'').toUpperCase()}</span>
+          <div class="cd-t-text">${escHtml(t.text || '')}</div>
+        </div>`).join('')
+    : '<div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);padding:8px 0;">NO TRANSCRIPT RECORDED</div>';
+
+  document.getElementById('caseDetail').classList.add('open');
+  document.getElementById('caseOverlay').style.display = 'block';
+}
+
+function closeCase() {
+  document.getElementById('caseDetail').classList.remove('open');
+  document.getElementById('caseOverlay').style.display = 'none';
+}
+
+async function setDisposition(value) {
+  if (!selectedCase) return;
+  const token = getToken();
+  try {
+    await fetch('/api/cases', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ id: selectedCase.id, disposition: value }),
+    });
+    selectedCase.disposition = value;
+    showToast(`DISPOSITION SET: ${value}`);
+  } catch(e) { showToast('SAVE FAILED', true); }
+}
+
+async function saveDisposition() {
+  if (!selectedCase) return;
+  const token = getToken();
+  const notes = document.getElementById('cdNotes').value;
+  try {
+    await fetch('/api/cases', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ id: selectedCase.id, analystNotes: notes }),
+    });
+    selectedCase.analystNotes = notes;
+    showToast('NOTES SAVED');
+  } catch(e) { showToast('SAVE FAILED', true); }
+}
+
+async function escalateCase() {
+  if (!selectedCase) return;
+  const token = getToken();
+  try {
+    await fetch('/api/cases', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ id: selectedCase.id, status: 'escalated' }),
+    });
+    selectedCase.status = 'escalated';
+    document.getElementById('cdStatus').textContent = 'ESCALATED';
+    showToast('CASE ESCALATED');
+    await loadCases();
+  } catch(e) { showToast('ESCALATION FAILED', true); }
+}
+
+// ── TOAST ──
+const toastEl = document.createElement('div');
+toastEl.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--teal);border-radius:4px;padding:10px 16px;font-family:var(--mono);font-size:11px;color:var(--teal);letter-spacing:0.5px;opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:999;box-shadow:0 0 20px rgba(45,212,191,0.15);';
+document.body.appendChild(toastEl);
+function showToast(msg, isError = false) {
+  toastEl.textContent = msg.toUpperCase();
+  toastEl.style.borderColor = isError ? 'var(--red)' : 'var(--teal)';
+  toastEl.style.color       = isError ? 'var(--red)' : 'var(--teal)';
+  toastEl.style.opacity = '1';
+  setTimeout(() => toastEl.style.opacity = '0', 2400);
+}
+
+// ── PLAYBOOK EDITOR (ported from admin.js) ──
+let pbState = { version: 1, playbooks: [] };
+let currentPlaybook = null;
+
+function uniqueId(prefix = 'custom') { return `${prefix}_${Math.random().toString(36).slice(2,10)}`; }
+function escHtml(str) { return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
+
+function allPredefinedFactors() {
+  const map = new Map();
+  for (const p of pbState.playbooks) {
+    for (const f of p.factors || []) {
+      if (f.type === 'predefined' && !map.has(f.id)) map.set(f.id, structuredClone(f));
+    }
+  }
+  return Array.from(map.values());
+}
+
+function loadPlaybookIntoForm() {
+  if (!currentPlaybook) return;
+  document.getElementById('playbookName').value        = currentPlaybook.name || '';
+  document.getElementById('playbookDescription').value = currentPlaybook.description || '';
+  document.getElementById('thresholdLow').value        = currentPlaybook.thresholds?.low ?? 20;
+  document.getElementById('thresholdModerate').value   = currentPlaybook.thresholds?.moderate ?? 40;
+  document.getElementById('thresholdHigh').value       = currentPlaybook.thresholds?.high ?? 60;
+  renderFactorEditors();
+}
+
+function renderFactorEditors() {
+  const wrap = document.getElementById('factorEditors');
+  wrap.innerHTML = '';
+  (currentPlaybook?.factors || []).forEach(factor => {
+    const div = document.createElement('div');
+    div.className = 'factor-editor';
+    div.innerHTML = `
+      <div class="split">
+        <div><label class="f-lbl">NAME</label><input class="f-input" data-field="name" value="${escHtml(factor.name||'')}" /></div>
+        <div><label class="f-lbl">WEIGHT</label><input class="f-input" data-field="weight" type="number" value="${escHtml(String(factor.weight||0))}" /></div>
+      </div>
+      <label class="f-lbl">QUESTION</label>
+      <input class="f-input" data-field="question" value="${escHtml(factor.question||'')}" />
+      <label class="f-lbl">FOLLOW-UP IF YES</label>
+      <input class="f-input" data-field="followUpYes" value="${escHtml(factor.followUpYes||'')}" />
+      <label class="f-lbl">RESOLUTION HINT</label>
+      <input class="f-input" data-field="resolutionHint" value="${escHtml(factor.resolutionHint||'')}" />
+      <div class="factor-editor-row">
+        <span class="factor-type-pill">${factor.type||'CUSTOM'}</span>
+        <button type="button" class="btn btn-red" style="font-size:9px;padding:3px 10px;" data-action="remove">REMOVE</button>
+      </div>`;
+    div.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('input', () => {
+        factor[inp.dataset.field] = inp.type === 'number' ? Number(inp.value) : inp.value;
+      });
+    });
+    div.querySelector('[data-action="remove"]').addEventListener('click', () => {
+      currentPlaybook.factors = currentPlaybook.factors.filter(f => f.id !== factor.id);
+      renderFactorEditors();
+    });
+    wrap.appendChild(div);
+  });
+}
+
+function renderPredefinedOptions() {
+  const sel = document.getElementById('predefinedFactorSelect');
+  sel.innerHTML = '';
+  allPredefinedFactors().forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f.id;
+    opt.textContent = `${f.name} (+${f.weight})`;
+    sel.appendChild(opt);
+  });
+}
+
+function renderPlaybookOptions() {
+  const sel = document.getElementById('adminPlaybookSelect');
+  sel.innerHTML = '';
+  pbState.playbooks.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = p.name;
+    sel.appendChild(opt);
+  });
+  currentPlaybook = pbState.playbooks.find(p => p.id === sel.value) || pbState.playbooks[0] || null;
+  if (currentPlaybook) sel.value = currentPlaybook.id;
+  loadPlaybookIntoForm();
+}
+
+async function loadPlaybooks() {
+  const resp = await fetch('/api/playbooks');
+  pbState = await resp.json();
+  renderPredefinedOptions();
+  renderPlaybookOptions();
+  renderAnswerPatterns();
+}
+
+function syncPlaybookHeaderFields() {
+  if (!currentPlaybook) return;
+  currentPlaybook.name        = document.getElementById('playbookName').value;
+  currentPlaybook.description = document.getElementById('playbookDescription').value;
+  currentPlaybook.thresholds  = {
+    low:      Number(document.getElementById('thresholdLow').value || 20),
+    moderate: Number(document.getElementById('thresholdModerate').value || 40),
+    high:     Number(document.getElementById('thresholdHigh').value || 60),
+  };
+}
+
+['playbookName','playbookDescription','thresholdLow','thresholdModerate','thresholdHigh'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', syncPlaybookHeaderFields);
+});
+
+document.getElementById('adminPlaybookSelect').addEventListener('change', function() {
+  currentPlaybook = pbState.playbooks.find(p => p.id === this.value) || null;
+  loadPlaybookIntoForm();
+});
+
+document.getElementById('addPredefinedBtn').addEventListener('click', () => {
+  const sel    = document.getElementById('predefinedFactorSelect');
+  const factor = allPredefinedFactors().find(f => f.id === sel.value);
+  if (!factor || !currentPlaybook) return;
+  const copy = structuredClone(factor);
+  copy.id = uniqueId(factor.id);
+  currentPlaybook.factors.push(copy);
+  renderFactorEditors();
+});
+
+document.getElementById('addCustomBtn').addEventListener('click', () => {
+  if (!currentPlaybook) return;
+  const name     = document.getElementById('customName').value.trim();
+  const question = document.getElementById('customQuestion').value.trim();
+  const weight   = Number(document.getElementById('customWeight').value || 20);
+  const hint     = document.getElementById('customHint').value.trim();
+  if (!name || !question) { showMsg('CUSTOM FACTOR NEEDS AT LEAST A NAME AND QUESTION.', true); return; }
+  currentPlaybook.factors.push({ id: uniqueId('custom'), name, type: 'custom', weight, question, followUpYes: '', resolutionHint: hint });
+  ['customName','customQuestion','customHint'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('customWeight').value = '20';
+  renderFactorEditors();
+  showMsg('FACTOR ADDED.', false);
+});
+
+async function savePlaybooks() {
+  syncPlaybookHeaderFields();
+  const token = getToken();
+  if (!token) { showMsg('ADMIN BEARER TOKEN IS REQUIRED TO SAVE.', true); return; }
+  pbState.version = Date.now();
+  const resp = await fetch('/api/playbooks', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify(pbState),
+  });
+  const result = await resp.json();
+  if (!resp.ok) { showMsg(result.error || 'SAVE FAILED.', true); return; }
+  showMsg(result.warning || 'DEPLOYED SUCCESSFULLY.', false);
+  showToast('PLAYBOOKS DEPLOYED');
+}
+
+document.getElementById('saveBtn').addEventListener('click', savePlaybooks);
+document.getElementById('resetBtn').addEventListener('click', reloadAll);
+
+function showMsg(text, isError) {
+  const el = document.getElementById('adminMessage');
+  el.textContent = text;
+  el.className = 'admin-message ' + (isError ? 'show-err' : 'show-ok');
+}
+
+// ── ANSWER PATTERNS ──
+function renderAnswerPatterns() {
+  // Build from real playbook factor names — static percentages for now
+  ['remPat','wirePat'].forEach((id, pi) => {
+    const pb = pbState.playbooks[pi];
+    if (!pb) return;
+    document.getElementById(id).innerHTML = (pb.factors || []).map((f, i) => `
+      <div class="ap-row">
+        <div class="ap-q">Q${i+1} ${(f.name||'').toUpperCase()}</div>
+        <div class="ap-bars">
+          <div class="ap-yes" style="width:60%"></div>
+          <div class="ap-no"  style="width:30%"></div>
+          <div class="ap-uns" style="width:10%"></div>
+        </div>
+        <div class="ap-pct" style="color:var(--text-dim);">10% UNSURE</div>
+      </div>`).join('');
+  });
+}
+
+// ── RELOAD ALL ──
+async function reloadAll() {
+  await Promise.all([loadPlaybooks(), loadCases()]);
+  showToast('RELOADED');
+}
+
+// ── INIT ──
+initTokenFields();
+loadPlaybooks();
+loadCases();
+</script>
 </body>
 </html>
