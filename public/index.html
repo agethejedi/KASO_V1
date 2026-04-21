@@ -1,289 +1,919 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fraud Response Voice Agent</title>
-  <link rel="stylesheet" href="/styles.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RISKXLABS / FRAUD AGENT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+input, textarea, button, select {
+  -webkit-appearance: none; appearance: none;
+  background-color: transparent; color: inherit; border: none; font: inherit;
+}
+input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #070d0f inset !important;
+  -webkit-text-fill-color: #a8c4c8 !important;
+}
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+/* ── Design tokens ── */
+:root {
+  --bg:         #070d0f;
+  --bg2:        #09110f;
+  --card:       #0d1a1c;
+  --card2:      #101f21;
+  --border:     #182e32;
+  --border-hi:  #244448;
+  --teal:       #2dd4bf;
+  --teal-dim:   rgba(45,212,191,0.10);
+  --teal-glow:  rgba(45,212,191,0.05);
+  --teal-mid:   rgba(45,212,191,0.20);
+  --green:      #00e87a;
+  --green-dim:  rgba(0,232,122,0.10);
+  --red:        #ff4d4d;
+  --red-dim:    rgba(255,77,77,0.10);
+  --amber:      #f5a623;
+  --amber-dim:  rgba(245,166,35,0.10);
+  --purple:     #a78bfa;
+  --purple-dim: rgba(167,139,250,0.10);
+  --text:       #a8c4c8;
+  --text-hi:    #d4e8ea;
+  --text-dim:   #4a6a70;
+  --mono:       'Share Tech Mono', monospace;
+  --cond:       'Barlow Condensed', sans-serif;
+  --body:       'Barlow', sans-serif;
+}
+
+html, body {
+  background: #070d0f; color: var(--text);
+  font-family: var(--body); font-size: 13px; line-height: 1.5; min-height: 100vh;
+}
+
+/* scanlines */
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 999;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px);
+}
+
+/* teal atmosphere */
+body::after {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 0%, rgba(17,90,80,0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 100%, rgba(10,60,55,0.18) 0%, transparent 60%);
+}
+
+/* ── INTAKE MODAL ── */
+.intake-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(4,8,10,0.92);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.intake-overlay.hidden { display: none; }
+
+.intake-modal {
+  background: linear-gradient(135deg, #0d1a1c, #091416);
+  border: 1px solid var(--border-hi); border-top: 2px solid var(--teal);
+  border-radius: 8px; width: 100%; max-width: 480px; padding: 32px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 40px rgba(45,212,191,0.06);
+  animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn  { from{opacity:0} to{opacity:1} }
+
+.intake-eyebrow {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 2.5px;
+  text-transform: uppercase; color: var(--teal); margin-bottom: 6px;
+}
+.intake-title {
+  font-family: var(--cond); font-size: 22px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text-hi);
+  margin-bottom: 6px; line-height: 1.1;
+}
+.intake-sub {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.5px;
+  color: var(--text-dim); margin-bottom: 24px; line-height: 1.7;
+}
+.intake-divider {
+  height: 1px; background: linear-gradient(90deg, transparent, var(--border-hi), transparent);
+  margin: 20px 0;
+}
+.intake-field-group { margin-bottom: 14px; }
+.intake-label {
+  display: block; font-family: var(--mono); font-size: 9px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px;
+}
+.intake-input {
+  width: 100%; padding: 10px 13px; background: var(--bg) !important;
+  border: 1px solid var(--border-hi); border-radius: 4px;
+  font-family: var(--mono); font-size: 12px; color: var(--text-hi);
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+}
+.intake-input:focus { border-color: var(--teal); box-shadow: 0 0 0 2px rgba(45,212,191,0.08); }
+.intake-input::placeholder { color: var(--text-dim); }
+.intake-input.error { border-color: var(--red); }
+.intake-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.intake-hint {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.3px;
+  color: var(--text-dim); margin-top: 4px; line-height: 1.6;
+}
+.intake-submit {
+  width: 100%; padding: 13px; margin-top: 8px;
+  background: var(--teal-dim); border: 1px solid rgba(45,212,191,0.4);
+  border-radius: 5px; font-family: var(--mono); font-size: 11px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--teal);
+  cursor: pointer; transition: all 0.2s;
+}
+.intake-submit:hover { background: var(--teal-mid); box-shadow: 0 0 20px rgba(45,212,191,0.15); }
+.intake-privacy {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.3px;
+  color: var(--text-dim); text-align: center; margin-top: 14px; line-height: 1.7;
+}
+
+/* ── CASE TOAST ── */
+.case-toast {
+  position: fixed; top: 64px; left: 50%; transform: translateX(-50%);
+  background: var(--card2); border: 1px solid rgba(45,212,191,0.35);
+  border-top: 2px solid var(--teal); border-radius: 6px;
+  padding: 12px 20px; display: none; align-items: center; gap: 12px;
+  z-index: 400; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  animation: slideDown 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+.case-toast.show { display: flex; }
+@keyframes slideDown {
+  from{opacity:0;transform:translateX(-50%) translateY(-10px)}
+  to{opacity:1;transform:translateX(-50%) translateY(0)}
+}
+.case-toast-icon { font-size: 16px; }
+.case-toast-title {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--teal); margin-bottom: 2px;
+}
+.case-toast-id { font-family: var(--mono); font-size: 11px; color: var(--text-hi); }
+
+/* ── TOPBAR ── */
+.topbar {
+  position: relative; z-index: 1;
+  background: linear-gradient(90deg, #09110f, #080e10);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px; height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.tb-brand { display: flex; flex-direction: column; }
+.tb-breadcrumb {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 2px;
+  color: var(--text-dim); text-transform: uppercase;
+}
+.tb-breadcrumb span { color: var(--teal); }
+.tb-title {
+  font-family: var(--cond); font-size: 15px; font-weight: 700;
+  letter-spacing: 3px; text-transform: uppercase; color: var(--text-hi); line-height: 1;
+}
+.tb-right { display: flex; align-items: center; gap: 14px; }
+.case-chip {
+  display: none; align-items: center; gap: 7px;
+  background: var(--teal-dim); border: 1px solid rgba(45,212,191,0.25);
+  border-radius: 3px; padding: 4px 10px;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--teal);
+}
+.case-chip span { color: var(--text-hi); }
+.session-pill {
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.5px; color: var(--text-dim);
+}
+.session-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--text-dim); transition: background 0.4s;
+}
+.tb-admin {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--text-dim); text-decoration: none; transition: color 0.15s;
+}
+.tb-admin:hover { color: var(--teal); }
+
+/* User strip */
+.user-strip {
+  position: relative; z-index: 1;
+  display: none; align-items: center; gap: 10px;
+  padding: 8px 24px; border-bottom: 1px solid var(--border);
+  background: rgba(13,26,28,0.8);
+}
+.user-strip-avatar { font-size: 14px; }
+.user-strip-name {
+  font-family: var(--mono); font-size: 11px; color: var(--text-hi); letter-spacing: 0.3px;
+}
+.user-strip-contact {
+  font-family: var(--mono); font-size: 9px; color: var(--text-dim); letter-spacing: 0.3px; margin-top: 1px;
+}
+
+/* ── SHELL ── */
+.shell {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: 1fr 380px;
+  min-height: calc(100vh - 52px);
+  max-width: 1300px; margin: 0 auto;
+}
+
+/* ── VOICE PANEL ── */
+.voice-panel {
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 28px 24px 24px; overflow-y: auto; background: var(--bg);
+}
+
+/* Orb */
+.voice-stage {
+  position: relative; width: 190px; height: 190px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 18px; flex-shrink: 0;
+}
+.ripple {
+  position: absolute; border-radius: 50%;
+  border: 1px solid rgba(45,212,191,0.15);
+  animation: rippleOut 2.8s ease-out infinite; opacity: 0;
+}
+.ripple:nth-child(1) { width: 124px; height: 124px; animation-delay: 0s; }
+.ripple:nth-child(2) { width: 158px; height: 158px; animation-delay: 0.7s; }
+.ripple:nth-child(3) { width: 190px; height: 190px; animation-delay: 1.4s; }
+@keyframes rippleOut { 0%{opacity:0.7;transform:scale(0.88)} 100%{opacity:0;transform:scale(1.08)} }
+
+.voice-orb {
+  width: 96px; height: 96px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #1a4a42, #071210);
+  border: 1px solid rgba(45,212,191,0.3);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  position: relative; z-index: 2; cursor: pointer;
+  box-shadow: 0 0 32px rgba(45,212,191,0.15), inset 0 1px 0 rgba(45,212,191,0.1);
+  transition: all 0.4s ease;
+  animation: orbFloat 4s ease-in-out infinite;
+}
+@keyframes orbFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+.orb-icon { font-size: 26px; pointer-events: none; }
+
+/* Mic state colors */
+body[data-mic-state="listening"] .voice-orb {
+  background: radial-gradient(circle at 35% 35%, #0e3a28, #060e0a);
+  border-color: rgba(0,232,122,0.4); box-shadow: 0 0 48px rgba(0,232,122,0.2);
+  animation: orbPulse 1.4s ease-in-out infinite;
+}
+body[data-mic-state="speaking"] .voice-orb {
+  box-shadow: 0 0 48px rgba(45,212,191,0.3);
+  animation: orbPulse 0.4s ease-in-out infinite alternate;
+}
+body[data-mic-state="listening"] .ripple { border-color: rgba(0,232,122,0.2); }
+@keyframes orbPulse { from{transform:scale(1)} to{transform:scale(1.04)} }
+
+/* Mode controls — hidden selects still functional */
+.mode-controls {
+  display: flex; gap: 8px; margin-bottom: 14px; width: 100%; flex-wrap: wrap;
+}
+.mode-select-wrap { position: relative; flex: 1; min-width: 140px; }
+.mode-select-label {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: 4px; display: block;
+}
+.mode-select {
+  width: 100%; background: var(--card) !important;
+  border: 1px solid var(--border-hi); border-radius: 4px;
+  padding: 7px 10px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.5px;
+  color: var(--text-hi); outline: none; cursor: pointer; transition: border-color 0.2s;
+}
+.mode-select:focus { border-color: var(--teal); }
+
+/* State label */
+.state-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: 16px; text-align: center;
+}
+body[data-mic-state="speaking"]  .state-label { color: var(--teal); }
+body[data-mic-state="listening"] .state-label { color: var(--green); }
+
+/* User strip in voice panel */
+.voice-user-strip {
+  width: 100%; background: var(--card2); border: 1px solid var(--border);
+  border-radius: 5px; padding: 9px 12px; display: none;
+  align-items: center; gap: 10px; margin-bottom: 12px;
+}
+.voice-user-strip.show { display: flex; }
+.vus-avatar { font-size: 14px; flex-shrink: 0; }
+.vus-name { font-family: var(--mono); font-size: 11px; color: var(--text-hi); }
+.vus-contact { font-family: var(--mono); font-size: 9px; color: var(--text-dim); margin-top: 1px; }
+
+/* Agent bubble */
+.agent-bubble {
+  width: 100%;
+  background: linear-gradient(135deg, #0d1a1c, #0a1416);
+  border: 1px solid var(--border-hi); border-left: 2px solid var(--teal);
+  border-radius: 6px; padding: 13px 15px; margin-bottom: 12px;
+}
+.bubble-lbl {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--teal); margin-bottom: 5px;
+}
+.bubble-text { font-size: 13px; color: var(--text-hi); line-height: 1.65; font-weight: 300; }
+
+/* Transcript area */
+.transcript-area {
+  width: 100%; min-height: 120px; max-height: 240px;
+  overflow-y: auto; margin-bottom: 12px;
+  border: 1px solid var(--border); border-radius: 6px; padding: 10px;
+  background: rgba(255,255,255,0.01);
+}
+.bubble { padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; font-size: 12px; line-height: 1.5; }
+.bubble.agent  { background: rgba(45,212,191,0.08); border: 1px solid rgba(45,212,191,0.15); color: var(--text-hi); }
+.bubble.user   { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text); margin-left: auto; max-width: 85%; }
+.bubble.system { background: transparent; color: var(--text-dim); font-style: italic; font-size: 11px; }
+
+/* Current question */
+.current-q-wrap { width: 100%; margin-bottom: 12px; }
+.current-q-label {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: 5px; display: block;
+}
+.current-q-text {
+  background: var(--card); border: 1px solid var(--border-hi);
+  border-left: 2px solid var(--amber); border-radius: 5px;
+  padding: 10px 12px; font-size: 13px; color: var(--text-hi); line-height: 1.55;
+  min-height: 48px;
+}
+
+/* Quick buttons */
+.quick-row { display: flex; gap: 6px; margin-bottom: 10px; width: 100%; }
+.quick-btn {
+  flex: 1; padding: 8px 0; border-radius: 4px;
+  border: 1px solid var(--border-hi); background: var(--card);
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+}
+.quick-btn:hover       { border-color: var(--teal); color: var(--teal); background: var(--teal-glow); }
+.quick-btn.active      { border-color: var(--teal); background: var(--teal-dim); color: var(--teal); }
+.quick-btn[data-answer="yes"]:hover  { border-color: var(--red);   color: var(--red);   background: var(--red-dim); }
+.quick-btn[data-answer="no"]:hover   { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+
+/* Manual input */
+.manual-row { display: flex; gap: 6px; width: 100%; margin-bottom: 10px; }
+.manual-input {
+  flex: 1; background: var(--card) !important; border: 1px solid var(--border-hi);
+  border-radius: 4px; padding: 8px 11px; font-family: var(--mono); font-size: 11px;
+  color: var(--text-hi); outline: none; transition: border-color 0.2s;
+}
+.manual-input:focus { border-color: var(--teal); }
+.manual-input::placeholder { color: var(--text-dim); }
+.manual-submit {
+  padding: 8px 14px; background: var(--teal-dim); border: 1px solid rgba(45,212,191,0.3);
+  border-radius: 4px; font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--teal); cursor: pointer; transition: all 0.15s;
+}
+.manual-submit:hover { background: var(--teal-mid); }
+
+/* Session controls */
+.ctrl-row { display: flex; gap: 6px; width: 100%; margin-bottom: 16px; }
+.ctrl-btn {
+  flex: 1; padding: 8px 0; border-radius: 4px; border: 1px solid var(--border-hi);
+  background: transparent; font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+}
+.ctrl-btn:hover { color: var(--text); border-color: var(--border-hi); }
+.ctrl-btn.stop:hover  { border-color: var(--red);  color: var(--red);  background: var(--red-dim); }
+.ctrl-btn.eval:hover  { border-color: var(--teal); color: var(--teal); background: var(--teal-glow); }
+
+/* Status pills */
+.status-pill {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 3px; background: var(--card2);
+  border: 1px solid var(--border); color: var(--text-dim);
+}
+
+/* Decision panel */
+.decision-panel {
+  width: 100%; background: var(--card); border: 1px solid var(--border);
+  border-radius: 6px; padding: 14px; margin-top: 4px;
+}
+.dp-title {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: 12px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.kpis {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;
+}
+.kpi {
+  background: var(--card2); border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px;
+}
+.kpi-label {
+  font-family: var(--mono); font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: 4px;
+}
+.kpi-val {
+  font-family: var(--mono); font-size: 20px; font-weight: 400; color: var(--text-hi); line-height: 1;
+}
+.dp-section-label {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: 6px; margin-top: 10px;
+}
+.factor-list, .next-steps { display: grid; gap: 6px; }
+.factor-item, .step-item {
+  background: var(--card2); border: 1px solid var(--border); border-radius: 4px;
+  padding: 8px 10px; font-size: 11px; color: var(--text); line-height: 1.5;
+}
+.factor-item strong { color: var(--teal); font-family: var(--mono); font-size: 10px; }
+small.helper { color: var(--text-dim); font-size: 10px; }
+
+/* Score colors */
+.score-minimal  { color: var(--green); }
+.score-low      { color: var(--teal); }
+.score-moderate { color: var(--amber); }
+.score-high     { color: var(--red); }
+
+/* ── EVIDENCE PANEL ── */
+.evidence-panel {
+  background: linear-gradient(180deg, #09110f 0%, #070d0e 100%);
+  display: flex; flex-direction: column; overflow: hidden;
+  position: sticky; top: 0; height: 100vh;
+}
+.ep-header {
+  padding: 12px 18px; border-bottom: 1px solid var(--border);
+  background: var(--card2); flex-shrink: 0;
+}
+.ep-title {
+  font-family: var(--cond); font-size: 12px; font-weight: 700;
+  letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-hi);
+  display: flex; align-items: center; gap: 8px;
+}
+.ep-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 5px var(--teal); }
+.ep-sub { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--text-dim); margin-top: 2px; }
+
+.ev-tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  background: var(--bg2); flex-shrink: 0; overflow-x: auto;
+}
+.ev-tab {
+  flex-shrink: 0; padding: 8px 10px;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.8px; text-transform: uppercase;
+  color: var(--text-dim); cursor: pointer; border-bottom: 2px solid transparent;
+  transition: all 0.15s; white-space: nowrap; background: transparent; border-top: none; border-left: none; border-right: none;
+}
+.ev-tab:hover  { color: var(--text); }
+.ev-tab.active { color: var(--teal); border-bottom-color: var(--teal); background: var(--teal-glow); }
+
+.ev-body { flex: 1; overflow-y: auto; padding: 14px; }
+.ev-pane { display: none; }
+.ev-pane.active { display: block; }
+
+.ev-label {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: 6px; display: block;
+}
+.ev-hint { font-family: var(--mono); font-size: 9px; letter-spacing: 0.5px; color: var(--text-dim); margin-bottom: 14px; line-height: 1.7; }
+.ev-empty { font-family: var(--mono); font-size: 10px; color: var(--text-dim); text-align: center; padding: 32px 0; letter-spacing: 1px; }
+
+.ev-input-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.ev-input {
+  flex: 1; width: 100%; background: #070d0f !important;
+  border: 1px solid var(--border-hi); border-radius: 4px;
+  padding: 9px 12px; font-family: var(--mono); font-size: 11px; color: var(--text-hi);
+  outline: none; transition: border-color 0.2s;
+}
+.ev-input:focus { border-color: var(--teal); box-shadow: 0 0 0 2px rgba(45,212,191,0.08); }
+.ev-input::placeholder { color: var(--text-dim); }
+textarea.ev-input { resize: vertical; min-height: 64px; }
+
+.ev-analyze-btn {
+  padding: 9px 12px; background: var(--teal-dim); border: 1px solid rgba(45,212,191,0.35);
+  border-radius: 4px; font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--teal); cursor: pointer; white-space: nowrap; transition: all 0.15s;
+}
+.ev-analyze-btn:hover { background: var(--teal-mid); box-shadow: 0 0 12px rgba(45,212,191,0.15); }
+.ev-analyze-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.ev-dropzone {
+  border: 1px dashed var(--border-hi); border-radius: 6px;
+  padding: 20px 16px; text-align: center; cursor: pointer;
+  position: relative; background: var(--bg); transition: all 0.2s; margin-bottom: 8px;
+}
+.ev-dropzone:hover, .ev-dropzone.dragover { border-color: var(--teal); background: var(--teal-glow); }
+.ev-dropzone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.ev-drop-icon  { font-size: 20px; margin-bottom: 6px; }
+.ev-drop-title { font-family: var(--cond); font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text-hi); margin-bottom: 3px; }
+.ev-drop-sub   { font-family: var(--mono); font-size: 9px; letter-spacing: 0.5px; color: var(--text-dim); }
+
+.ev-img-preview { position: relative; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-hi); margin-bottom: 8px; }
+.ev-img-preview img { width: 100%; max-height: 160px; object-fit: cover; display: block; filter: brightness(0.85); }
+.ev-img-clear {
+  position: absolute; top: 6px; right: 6px; width: 20px; height: 20px;
+  background: rgba(7,13,15,0.8); border: 1px solid var(--border-hi); border-radius: 3px;
+  color: var(--text-dim); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 10px; transition: all 0.15s;
+}
+.ev-img-clear:hover { color: var(--red); border-color: var(--red); }
+
+.ev-platform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+.ev-platform {
+  padding: 8px 10px; border: 1px solid var(--border-hi); border-radius: 4px;
+  background: var(--bg); cursor: pointer; transition: all 0.15s; text-align: center;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim);
+}
+.ev-platform:hover  { border-color: var(--border-hi); background: var(--teal-glow); }
+.ev-platform.active { border-color: var(--teal); background: var(--teal-dim); color: var(--teal); }
+
+.ev-crypto-row  { display: flex; gap: 6px; align-items: center; margin-bottom: 7px; }
+.ev-crypto-num  { font-family: var(--mono); font-size: 9px; color: var(--teal); flex-shrink: 0; width: 18px; text-align: right; }
+.ev-crypto-wrap { flex: 1; position: relative; }
+.ev-crypto-input { padding-right: 52px !important; font-family: monospace !important; font-size: 10px !important; }
+.ev-chain-badge {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  font-family: var(--mono); font-size: 8px; font-weight: 700; letter-spacing: 0.6em;
+  padding: 2px 5px; border-radius: 3px;
+  background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,166,35,0.3);
+  display: none; pointer-events: none;
+}
+.ev-chain-badge.ev-chain-show { display: block; }
+.ev-crypto-remove {
+  width: 24px; height: 24px; flex-shrink: 0; background: transparent;
+  border: 1px solid var(--border); border-radius: 3px; color: var(--text-dim);
+  cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.ev-crypto-remove:hover { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+.ev-add-btn {
+  width: 100%; padding: 7px; background: transparent;
+  border: 1px dashed var(--border-hi); border-radius: 4px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+}
+.ev-add-btn:hover    { border-color: var(--teal); color: var(--teal); }
+.ev-add-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.ev-result {
+  border-radius: 6px; overflow: hidden; border: 1px solid var(--border);
+  margin-top: 10px; display: none; animation: fadeIn 0.3s ease;
+}
+.ev-result-header { padding: 9px 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+.ev-scanning   { background: rgba(245,166,35,0.08); border-color: rgba(245,166,35,0.2) !important; }
+.ev-clean      { background: rgba(0,232,122,0.08);  border-color: rgba(0,232,122,0.2)  !important; }
+.ev-suspicious { background: rgba(245,166,35,0.08); border-color: rgba(245,166,35,0.2) !important; }
+.ev-dangerous  { background: rgba(255,77,77,0.08);  border-color: rgba(255,77,77,0.2)  !important; }
+.ev-result-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.ev-scanning   .ev-result-dot { background: var(--amber); animation: blink 0.5s ease infinite; }
+.ev-clean      .ev-result-dot { background: var(--green); }
+.ev-suspicious .ev-result-dot { background: var(--amber); }
+.ev-dangerous  .ev-result-dot { background: var(--red); box-shadow: 0 0 8px rgba(255,77,77,0.5); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.ev-result-status { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; flex: 1; }
+.ev-scanning   .ev-result-status { color: var(--amber); }
+.ev-clean      .ev-result-status { color: var(--green); }
+.ev-suspicious .ev-result-status { color: var(--amber); }
+.ev-dangerous  .ev-result-status { color: var(--red); }
+.ev-result-score { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+.ev-scanning   .ev-result-score { color: var(--amber); }
+.ev-clean      .ev-result-score { color: var(--green); }
+.ev-suspicious .ev-result-score { color: var(--amber); }
+.ev-dangerous  .ev-result-score { color: var(--red); }
+.ev-result-body   { padding: 10px 12px; background: var(--bg); }
+.ev-result-source { font-family: var(--mono); font-size: 9px; color: var(--text-dim); margin-bottom: 8px; word-break: break-all; }
+.ev-result-muted  { font-family: var(--mono); font-size: 10px; color: var(--text-dim); }
+.ev-findings { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.ev-finding  { display: flex; gap: 7px; align-items: flex-start; font-size: 11px; color: var(--text); line-height: 1.5; }
+.ev-finding-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.ev-dot-red   { background: var(--red); }
+.ev-dot-amber { background: var(--amber); }
+.ev-dot-green { background: var(--green); }
+.ev-action {
+  width: 100%; padding: 7px 10px; border-radius: 4px; font-family: var(--mono);
+  font-size: 10px; letter-spacing: 0.5px; cursor: pointer; text-align: left; transition: all 0.15s; border: 1px solid;
+}
+.ev-action-flag       { background: var(--red-dim);   color: var(--red);   border-color: rgba(255,77,77,0.3); }
+.ev-action-flag:hover { background: rgba(255,77,77,0.18); }
+.ev-action-ok         { background: var(--green-dim); color: var(--green); border-color: rgba(0,232,122,0.2); }
+
+.ev-crypto-result-row            { padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
+.ev-crypto-result-row:last-child { border-bottom: none; }
+.ev-crypto-result-top            { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+.ev-crypto-risk                  { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 0.6em; }
+.ev-crypto-risk-high             { color: var(--red); }
+.ev-crypto-risk-medium           { color: var(--amber); }
+.ev-crypto-risk-low              { color: var(--green); }
+.ev-finding-text                 { font-size: 11px; color: var(--text); line-height: 1.5; }
+
+.ev-log-item        { background: var(--card); border: 1px solid var(--border); border-radius: 5px; padding: 9px 11px; margin-bottom: 6px; }
+.ev-log-dangerous   { border-color: rgba(255,77,77,0.35);   background: rgba(255,77,77,0.03); }
+.ev-log-suspicious  { border-color: rgba(245,166,35,0.3);   background: rgba(245,166,35,0.03); }
+.ev-log-clean       { border-color: rgba(0,232,122,0.2); }
+.ev-log-top         { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; }
+.ev-log-type        { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; }
+.ev-log-type-link       { background: var(--teal-dim);   color: var(--teal);   border: 1px solid rgba(45,212,191,0.2); }
+.ev-log-type-screenshot { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); }
+.ev-log-type-social     { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(245,166,35,0.2); }
+.ev-log-type-crypto     { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(245,166,35,0.2); }
+.ev-log-verdict     { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; margin-left: auto; }
+.ev-verdict-dangerous  { color: var(--red); }
+.ev-verdict-suspicious { color: var(--amber); }
+.ev-verdict-clean      { color: var(--green); }
+.ev-log-source  { font-family: var(--mono); font-size: 10px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+.ev-log-summary { font-size: 11px; color: var(--text); line-height: 1.5; }
+
+/* Risk strip */
+.risk-strip {
+  flex-shrink: 0; border-top: 1px solid var(--border); padding: 12px 16px; background: var(--card2);
+}
+.risk-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+.risk-lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); }
+.risk-val { font-family: var(--mono); font-size: 20px; font-weight: 400; color: var(--text-hi); }
+.risk-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 7px; }
+.risk-fill { height: 100%; border-radius: 2px; width: 0%; transition: width 0.8s cubic-bezier(0.16,1,0.3,1); background: var(--green); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--teal); }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .evidence-panel { position: static; height: auto; }
+}
+</style>
 </head>
 <body>
 
-  <!-- ── INTAKE MODAL ─────────────────────────────────────────────────────── -->
-  <div id="intakeModal" class="intake-overlay">
-    <div class="intake-modal">
-      <div class="intake-eyebrow">RISKXLABS / FRAUD AGENT</div>
-      <h2 class="intake-title">Secure Assessment</h2>
-      <p class="intake-sub">
-        Your information is used only to track your case and send you status updates.
-        It is never shared.
-      </p>
+<!-- ── INTAKE MODAL ── -->
+<div id="intakeModal" class="intake-overlay">
+  <div class="intake-modal">
+    <div class="intake-eyebrow">RISKXLABS / FRAUD AGENT</div>
+    <div class="intake-title">SECURE<br>ASSESSMENT</div>
+    <div class="intake-sub">YOUR INFORMATION IS USED ONLY TO TRACK YOUR CASE AND SEND STATUS UPDATES. NEVER SHARED.</div>
 
-      <form id="intakeForm" class="intake-form" novalidate>
-        <div class="intake-row">
-          <div class="intake-field">
-            <label for="intakeFirst">First name <span class="req">*</span></label>
-            <input id="intakeFirst" type="text" placeholder="Jane" required />
-          </div>
-          <div class="intake-field">
-            <label for="intakeLast">Last name</label>
-            <input id="intakeLast" type="text" placeholder="Smith" />
-          </div>
+    <form id="intakeForm" novalidate>
+      <div class="intake-row" style="margin-bottom:14px;">
+        <div>
+          <label class="intake-label">FIRST NAME *</label>
+          <input class="intake-input" id="intakeFirst" type="text" placeholder="JANE" required />
         </div>
-
-        <div class="intake-field">
-          <label for="intakeEmail">Email address <span class="req">*</span></label>
-          <input id="intakeEmail" type="email" placeholder="you@example.com" required />
-          <div class="intake-hint">We'll send your case number and updates here.</div>
+        <div>
+          <label class="intake-label">LAST NAME</label>
+          <input class="intake-input" id="intakeLast" type="text" placeholder="SMITH" />
         </div>
+      </div>
+      <div class="intake-field-group">
+        <label class="intake-label">EMAIL ADDRESS *</label>
+        <input class="intake-input" id="intakeEmail" type="email" placeholder="you@example.com" required />
+        <div class="intake-hint">WE'LL SEND YOUR CASE NUMBER AND UPDATES HERE</div>
+      </div>
+      <div class="intake-field-group">
+        <label class="intake-label">PHONE NUMBER <span style="color:var(--text-dim);font-size:9px;">(OPTIONAL)</span></label>
+        <input class="intake-input" id="intakePhone" type="tel" placeholder="+1 (555) 000-0000" />
+        <div class="intake-hint">USED ONLY IF A SPECIALIST NEEDS TO REACH YOU</div>
+      </div>
+      <div class="intake-divider"></div>
+      <button type="submit" class="intake-submit">⬢ BEGIN ASSESSMENT →</button>
+    </form>
 
-        <div class="intake-field">
-          <label for="intakePhone">Phone number <span class="intake-optional">(optional)</span></label>
-          <input id="intakePhone" type="tel" placeholder="+1 (555) 000-0000" />
-          <div class="intake-hint">Used only if a specialist needs to reach you.</div>
-        </div>
-
-        <button type="submit" class="btn-primary intake-submit">Begin assessment →</button>
-      </form>
-
-      <p class="intake-privacy">
-        🔒 Encrypted session · Not stored on your device ·
-        Case reference emailed immediately
-      </p>
-    </div>
+    <p class="intake-privacy">🔒 ENCRYPTED SESSION · NOT STORED ON YOUR DEVICE<br>CASE REFERENCE EMAILED IMMEDIATELY</p>
   </div>
+</div>
 
-  <!-- ── CASE TOAST ────────────────────────────────────────────────────────── -->
-  <div id="caseToast" class="case-toast">
-    <span class="case-toast-icon">📋</span>
-    <div>
-      <div class="case-toast-title">Case opened</div>
-      <div class="case-toast-id" id="caseToastId">—</div>
-    </div>
+<!-- ── CASE TOAST ── -->
+<div class="case-toast" id="caseToast">
+  <span class="case-toast-icon">📋</span>
+  <div>
+    <div class="case-toast-title">CASE OPENED</div>
+    <div class="case-toast-id" id="caseToastId">—</div>
   </div>
+</div>
 
-  <!-- ── HEADER ────────────────────────────────────────────────────────────── -->
-  <header class="header">
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo"></div>
-        <div class="title">
-          <h1>Fraud Response Voice Agent</h1>
-          <p>Adaptive fraud discovery for remote access scams and bank wire reviews.</p>
-        </div>
+<!-- ── TOPBAR ── -->
+<div class="topbar">
+  <div class="tb-brand">
+    <div class="tb-breadcrumb"><span>RISKXLABS</span> / FRAUD AGENT / SESSION</div>
+    <div class="tb-title">SECURE ASSESSMENT</div>
+  </div>
+  <div class="tb-right">
+    <div class="case-chip" id="caseChip">
+      <span>CASE</span>
+      <span id="caseChipId">—</span>
+    </div>
+    <div class="session-pill">
+      <div class="session-dot"></div>
+      <span id="statusPill" style="font-family:var(--mono);font-size:10px;letter-spacing:1px;">READY</span>
+    </div>
+    <a href="/admin.html" class="tb-admin">ADMIN →</a>
+  </div>
+</div>
+
+<!-- ── USER STRIP ── -->
+<div class="user-strip" id="userStrip">
+  <span class="user-strip-avatar">👤</span>
+  <div>
+    <div class="user-strip-name" id="userStripName">—</div>
+    <div class="user-strip-contact" id="userStripContact">—</div>
+  </div>
+</div>
+
+<!-- ── MAIN SHELL ── -->
+<div class="shell">
+
+  <!-- VOICE PANEL -->
+  <div class="voice-panel">
+
+    <!-- Mode selectors -->
+    <div class="mode-controls">
+      <div class="mode-select-wrap">
+        <label class="mode-select-label">PLAYBOOK</label>
+        <select id="playbookSelect" class="mode-select"></select>
       </div>
-
-      <!-- Case chip — shown once a case is opened -->
-      <div id="caseChip" class="case-chip" style="display:none;">
-        <span class="case-chip-label">CASE</span>
-        <span id="caseChipId" class="case-chip-id">—</span>
+      <div class="mode-select-wrap">
+        <label class="mode-select-label">VOICE MODE</label>
+        <select id="voiceModeSelect" class="mode-select">
+          <option value="guided">GUIDED BROWSER VOICE</option>
+          <option value="realtime">OPENAI REALTIME BETA</option>
+        </select>
       </div>
-
-      <nav class="nav-links">
-        <a href="/admin.html">Admin</a>
-      </nav>
+      <div class="mode-select-wrap">
+        <label class="mode-select-label">BROWSER VOICE</label>
+        <select id="voiceSelect" class="mode-select"></select>
+      </div>
     </div>
 
-    <!-- User identity strip — shown once intake is complete -->
-    <div id="userStrip" class="user-strip" style="display:none;">
-      <span class="user-strip-avatar">👤</span>
-      <div class="user-strip-info">
-        <div class="user-strip-name" id="userStripName">—</div>
-        <div class="user-strip-contact" id="userStripContact">—</div>
+    <!-- Orb -->
+    <div class="voice-stage">
+      <div class="ripple"></div>
+      <div class="ripple"></div>
+      <div class="ripple"></div>
+      <div class="voice-orb">
+        <span class="orb-icon" id="orbIcon">🎙</span>
       </div>
     </div>
-  </header>
 
-  <!-- ── MAIN SHELL ─────────────────────────────────────────────────────────── -->
-  <main class="shell shell-with-evidence">
+    <div class="state-label" id="micHeadline">IDLE</div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);text-align:center;margin-bottom:16px;letter-spacing:0.5px;" id="micSubtext">Press start to begin.</div>
 
-    <!-- Left column: existing session card -->
-    <div class="session-column">
-      <section class="card">
-        <div class="card-header">
-          <h2>Live session</h2>
-          <p class="muted">Guided mode is the most reliable scorecard path today. Realtime mode uses OpenAI WebRTC voice when your OpenAI key is configured.</p>
-          <hr class="soft" />
-        </div>
-        <div class="card-body stack">
-          <div class="row three-up">
-            <div>
-              <label for="playbookSelect">Playbook</label>
-              <select id="playbookSelect"></select>
-            </div>
-            <div>
-              <label for="voiceModeSelect">Voice mode</label>
-              <select id="voiceModeSelect">
-                <option value="guided">Guided browser voice</option>
-                <option value="realtime">OpenAI Realtime beta</option>
-              </select>
-            </div>
-            <div>
-              <label for="voiceSelect">Browser voice</label>
-              <select id="voiceSelect"></select>
-            </div>
-          </div>
-
-          <div class="mic-panel">
-            <div class="mic-ring" id="micRing" aria-hidden="true">
-              <div class="mic-dot"></div>
-            </div>
-            <div class="mic-copy">
-              <strong id="micHeadline">Idle</strong>
-              <p id="micSubtext" class="muted">Press start to begin. In guided mode you can answer by voice, quick buttons, or typed fallback.</p>
-            </div>
-            <div class="mic-badges">
-              <span class="status-pill" id="statusPill">Idle</span>
-              <span class="status-pill" id="modePill">Guided</span>
-            </div>
-          </div>
-
-          <div class="row">
-            <button class="btn-primary" id="startBtn">Start session</button>
-            <button class="btn-secondary" id="stopBtn">Stop session</button>
-            <button class="btn-secondary" id="evaluateBtn">Evaluate transcript</button>
-          </div>
-
-          <div class="answer-card stack" id="guidedAnswerCard">
-            <div>
-              <div class="muted smallcaps">Current prompt</div>
-              <div class="current-question" id="currentQuestion">Not started.</div>
-            </div>
-            <div class="quick-actions">
-              <button class="quick-btn" data-answer="yes">Yes</button>
-              <button class="quick-btn" data-answer="no">No</button>
-              <button class="quick-btn" data-answer="unsure">Unsure</button>
-            </div>
-            <div class="row">
-              <div style="flex:1 1 320px;">
-                <label for="manualAnswerInput">Typed fallback / notes</label>
-                <input id="manualAnswerInput" placeholder="Type a response if voice capture misses a few words" />
-              </div>
-              <div style="align-self:end;">
-                <button class="btn-secondary" id="submitManualAnswerBtn">Submit typed answer</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="transcript" id="transcript"></div>
-        </div>
-      </section>
-
-      <!-- Decision panel -->
-      <aside class="card">
-        <div class="card-header">
-          <h2>Decision panel</h2>
-          <p class="muted">Guided mode fills structured answers directly. Realtime mode can be scored from the transcript.</p>
-          <hr class="soft" />
-        </div>
-        <div class="card-body stack">
-          <div class="kpis">
-            <div class="kpi"><h3>Score</h3><strong id="scoreValue">0</strong></div>
-            <div class="kpi"><h3>Level</h3><strong id="levelValue">Minimal</strong></div>
-            <div class="kpi"><h3>Recommendation</h3><strong id="recommendationValue">Not evaluated</strong></div>
-            <div class="kpi"><h3>Playbook</h3><strong id="playbookValue">—</strong></div>
-          </div>
-          <div>
-            <h3>Triggered factors</h3>
-            <div class="factor-list" id="factorList"></div>
-          </div>
-          <div>
-            <h3>Next steps</h3>
-            <div class="next-steps" id="nextSteps"></div>
-          </div>
-        </div>
-      </aside>
+    <!-- Mode pill -->
+    <div style="display:flex;gap:6px;margin-bottom:12px;">
+      <span class="status-pill" id="modePill">GUIDED</span>
     </div>
 
-    <!-- ── EVIDENCE PANEL ──────────────────────────────────────────────────── -->
-    <aside class="card evidence-panel">
-      <div class="card-header">
-        <h2>Evidence intake</h2>
-        <p class="muted">Submit links, screenshots, social profiles, or crypto addresses for real-time AI analysis.</p>
-        <hr class="soft" />
+    <!-- Current question -->
+    <div class="current-q-wrap" id="guidedAnswerCard">
+      <label class="current-q-label">CURRENT PROMPT</label>
+      <div class="current-q-text" id="currentQuestion">NOT STARTED.</div>
+
+      <div class="quick-row" style="margin-top:10px;">
+        <button class="quick-btn" data-answer="yes">YES</button>
+        <button class="quick-btn" data-answer="no">NO</button>
+        <button class="quick-btn" data-answer="unsure">UNSURE</button>
       </div>
 
-      <!-- Tabs -->
-      <div class="ev-tabs">
-        <button class="ev-tab active" data-tab="ev-link">🔗 URL</button>
-        <button class="ev-tab" data-tab="ev-screenshot">📸 Screenshot</button>
-        <button class="ev-tab" data-tab="ev-social">👤 Social</button>
-        <button class="ev-tab" data-tab="ev-crypto">₿ Crypto</button>
-        <button class="ev-tab" data-tab="ev-log">📋 Log <span id="evLogCount">0</span></button>
+      <div class="manual-row" style="margin-top:8px;">
+        <input class="manual-input" id="manualAnswerInput" placeholder="Type if you can't speak…" />
+        <button class="manual-submit" id="submitManualAnswerBtn">SEND</button>
+      </div>
+    </div>
+
+    <!-- Session controls -->
+    <div class="ctrl-row" style="margin-top:12px;">
+      <button class="ctrl-btn" id="startBtn">▶ START</button>
+      <button class="ctrl-btn stop" id="stopBtn">⏹ STOP</button>
+      <button class="ctrl-btn eval" id="evaluateBtn">◈ EVALUATE</button>
+    </div>
+
+    <!-- Transcript -->
+    <div class="transcript-area" id="transcript"></div>
+
+    <!-- Decision panel -->
+    <div class="decision-panel">
+      <div class="dp-title">// RISK ASSESSMENT</div>
+      <div class="kpis">
+        <div class="kpi">
+          <div class="kpi-label">SCORE</div>
+          <div class="kpi-val" id="scoreValue">0</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">LEVEL</div>
+          <div class="kpi-val" id="levelValue" style="font-size:14px;">MINIMAL</div>
+        </div>
+        <div class="kpi" style="grid-column:1/-1;">
+          <div class="kpi-label">RECOMMENDATION</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text-hi);margin-top:4px;" id="recommendationValue">NOT EVALUATED</div>
+        </div>
+        <div class="kpi" style="grid-column:1/-1;">
+          <div class="kpi-label">PLAYBOOK</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--teal);margin-top:4px;" id="playbookValue">—</div>
+        </div>
+      </div>
+      <div class="dp-section-label">TRIGGERED FACTORS</div>
+      <div class="factor-list" id="factorList">
+        <div class="factor-item" style="color:var(--text-dim);">No factors triggered.</div>
+      </div>
+      <div class="dp-section-label">NEXT STEPS</div>
+      <div class="next-steps" id="nextSteps"></div>
+    </div>
+
+  </div><!-- /voice-panel -->
+
+  <!-- EVIDENCE PANEL -->
+  <div class="evidence-panel">
+    <div class="ep-header">
+      <div class="ep-title"><div class="ep-dot"></div>EVIDENCE INTAKE</div>
+      <div class="ep-sub">SUBMIT LINKS, SCREENSHOTS, PROFILES, OR CRYPTO FOR AI ANALYSIS</div>
+    </div>
+
+    <div class="ev-tabs">
+      <button class="ev-tab active" data-tab="ev-link">🔗 URL</button>
+      <button class="ev-tab" data-tab="ev-screenshot">📸 SCREENSHOT</button>
+      <button class="ev-tab" data-tab="ev-social">👤 SOCIAL</button>
+      <button class="ev-tab" data-tab="ev-crypto">₿ CRYPTO</button>
+      <button class="ev-tab" data-tab="ev-log">📋 LOG <span id="evLogCount">0</span></button>
+    </div>
+
+    <div class="ev-body">
+
+      <!-- URL -->
+      <div class="ev-pane active" id="ev-link">
+        <label class="ev-label">PASTE URL OR LINK</label>
+        <div class="ev-input-row">
+          <input id="evLinkInput" class="ev-input" type="url" placeholder="https://…" />
+          <button class="ev-analyze-btn" id="evAnalyzeLinkBtn">ANALYZE</button>
+        </div>
+        <p class="ev-hint">PASTE ANY LINK THEY SENT — EMAIL, TEXT, POP-UP, OR DOWNLOAD. AI CHECKS FOR PHISHING, DOMAIN AGE, LOOKALIKES, AND KNOWN THREAT SIGNATURES.</p>
+        <div class="ev-result" id="evLinkResult"></div>
       </div>
 
-      <div class="ev-body">
-
-        <!-- URL TAB -->
-        <div class="ev-pane active" id="ev-link">
-          <label class="ev-label">Paste URL or link</label>
-          <div class="ev-input-row">
-            <input id="evLinkInput" class="ev-input" type="url" placeholder="https://…" />
-            <button class="ev-analyze-btn" id="evAnalyzeLinkBtn">Analyze</button>
-          </div>
-          <p class="ev-hint">Paste any link they sent — email, text, pop-up, or download. AI checks for phishing, domain age, lookalikes, and known threat signatures.</p>
-          <div class="ev-result" id="evLinkResult"></div>
+      <!-- SCREENSHOT -->
+      <div class="ev-pane" id="ev-screenshot">
+        <label class="ev-label">UPLOAD SCREENSHOT</label>
+        <div class="ev-dropzone" id="evDropZone">
+          <input type="file" id="evFileInput" accept="image/*" />
+          <div class="ev-drop-icon">📎</div>
+          <div class="ev-drop-title">DROP IMAGE HERE</div>
+          <div class="ev-drop-sub">OR CLICK TO BROWSE · PNG JPG WEBP</div>
         </div>
-
-        <!-- SCREENSHOT TAB -->
-        <div class="ev-pane" id="ev-screenshot">
-          <label class="ev-label">Upload screenshot</label>
-          <div class="ev-dropzone" id="evDropZone">
-            <input type="file" id="evFileInput" accept="image/*" />
-            <div class="ev-drop-icon">📎</div>
-            <div class="ev-drop-title">Drop image here</div>
-            <div class="ev-drop-sub">or click to browse · PNG JPG WEBP</div>
-          </div>
-          <div class="ev-img-preview" id="evImgPreview" style="display:none;">
-            <img id="evImgEl" src="" alt="" />
-            <button class="ev-img-clear" id="evImgClear">✕</button>
-          </div>
-          <button class="ev-analyze-btn" id="evAnalyzeImgBtn" style="display:none;width:100%;">Analyze screenshot →</button>
-          <p class="ev-hint">Pop-ups, emails, fake alerts, and texts analyzed for spoofed branding, urgency language, and social engineering.</p>
-          <div class="ev-result" id="evImgResult"></div>
+        <div class="ev-img-preview" id="evImgPreview" style="display:none;">
+          <img id="evImgEl" src="" alt="" />
+          <button class="ev-img-clear" id="evImgClear">✕</button>
         </div>
+        <button class="ev-analyze-btn" id="evAnalyzeImgBtn" style="display:none;width:100%;margin-bottom:8px;">ANALYZE SCREENSHOT →</button>
+        <p class="ev-hint">POP-UPS, EMAILS, FAKE ALERTS, AND TEXTS ANALYZED FOR SPOOFED BRANDING, URGENCY LANGUAGE, AND SOCIAL ENGINEERING.</p>
+        <div class="ev-result" id="evImgResult"></div>
+      </div>
 
-        <!-- SOCIAL TAB -->
-        <div class="ev-pane" id="ev-social">
-          <label class="ev-label">Platform</label>
-          <div class="ev-platform-grid">
-            <button class="ev-platform active" data-platform="Facebook">📘 Facebook</button>
-            <button class="ev-platform" data-platform="Instagram">📷 Instagram</button>
-            <button class="ev-platform" data-platform="WhatsApp">💬 WhatsApp</button>
-            <button class="ev-platform" data-platform="LinkedIn">💼 LinkedIn</button>
-            <button class="ev-platform" data-platform="Telegram">✈️ Telegram</button>
-            <button class="ev-platform" data-platform="Other">🌐 Other</button>
-          </div>
-          <label class="ev-label" style="margin-top:12px;">Profile URL or username</label>
-          <input id="evSocialUrl" class="ev-input" type="text" placeholder="https://… or @username" />
-          <label class="ev-label" style="margin-top:10px;">What did they send or say? (optional)</label>
-          <textarea id="evSocialContext" class="ev-input" rows="3" placeholder="Paste their message or describe what happened…"></textarea>
-          <button class="ev-analyze-btn" id="evAnalyzeSocialBtn" style="width:100%;margin-top:8px;">Analyze profile →</button>
-          <div class="ev-result" id="evSocialResult"></div>
+      <!-- SOCIAL -->
+      <div class="ev-pane" id="ev-social">
+        <label class="ev-label">SELECT PLATFORM</label>
+        <div class="ev-platform-grid">
+          <button class="ev-platform active" data-platform="Facebook">📘 FACEBOOK</button>
+          <button class="ev-platform" data-platform="Instagram">📷 INSTAGRAM</button>
+          <button class="ev-platform" data-platform="WhatsApp">💬 WHATSAPP</button>
+          <button class="ev-platform" data-platform="LinkedIn">💼 LINKEDIN</button>
+          <button class="ev-platform" data-platform="Telegram">✈️ TELEGRAM</button>
+          <button class="ev-platform" data-platform="Other">🌐 OTHER</button>
         </div>
+        <label class="ev-label" style="margin-top:12px;">PROFILE URL OR USERNAME</label>
+        <input id="evSocialUrl" class="ev-input" type="text" placeholder="https://… or @username" style="margin-bottom:8px;" />
+        <label class="ev-label">WHAT DID THEY SEND OR SAY? (OPTIONAL)</label>
+        <textarea id="evSocialContext" class="ev-input" rows="3" placeholder="Paste their message or describe what happened…"></textarea>
+        <button class="ev-analyze-btn" id="evAnalyzeSocialBtn" style="width:100%;margin-top:8px;">ANALYZE PROFILE →</button>
+        <div class="ev-result" id="evSocialResult"></div>
+      </div>
 
-        <!-- CRYPTO TAB -->
-        <div class="ev-pane" id="ev-crypto">
-          <label class="ev-label">Crypto addresses — up to 5</label>
-          <p class="ev-hint">Enter any wallet addresses they asked you to send funds to. AI identifies the chain and checks for known scam wallets.</p>
-          <div id="evCryptoList"></div>
-          <button class="ev-add-btn" id="evAddCryptoBtn">+ Add address</button>
-          <button class="ev-analyze-btn" id="evAnalyzeCryptoBtn" style="width:100%;margin-top:10px;">Analyze addresses →</button>
-          <div class="ev-result" id="evCryptoResult"></div>
+      <!-- CRYPTO -->
+      <div class="ev-pane" id="ev-crypto">
+        <label class="ev-label">CRYPTO ADDRESSES — UP TO 5</label>
+        <p class="ev-hint">ENTER ANY WALLET ADDRESSES THEY ASKED YOU TO SEND FUNDS TO. AI IDENTIFIES THE CHAIN AND CHECKS FOR KNOWN SCAM WALLETS.</p>
+        <div id="evCryptoList"></div>
+        <button class="ev-add-btn" id="evAddCryptoBtn">+ ADD ADDRESS</button>
+        <button class="ev-analyze-btn" id="evAnalyzeCryptoBtn" style="width:100%;margin-top:10px;">ANALYZE ADDRESSES →</button>
+        <div class="ev-result" id="evCryptoResult"></div>
+      </div>
+
+      <!-- LOG -->
+      <div class="ev-pane" id="ev-log">
+        <div id="evLog">
+          <p class="ev-empty">NO EVIDENCE SUBMITTED YET</p>
         </div>
+      </div>
 
-        <!-- LOG TAB -->
-        <div class="ev-pane" id="ev-log">
-          <div id="evLog">
-            <p class="ev-empty">No evidence submitted yet.</p>
-          </div>
-        </div>
+    </div><!-- /ev-body -->
 
-      </div><!-- /ev-body -->
-    </aside>
+    <!-- Risk strip -->
+    <div class="risk-strip">
+      <div class="risk-row">
+        <span class="risk-lbl">COMPOSITE RISK SCORE</span>
+        <span class="risk-val" id="riskVal">—</span>
+      </div>
+      <div class="risk-track"><div class="risk-fill" id="riskFill"></div></div>
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:0.5px;color:var(--text-dim);line-height:1.6;" id="riskRec">
+        SUBMIT EVIDENCE TO GENERATE COMPOSITE SCORE.
+      </div>
+    </div>
 
-  </main>
+  </div><!-- /evidence-panel -->
 
-  <script src="/app.js"></script>
-  <script src="/evidence.js"></script>
+</div><!-- /shell -->
+
+<script src="/app.js"></script>
+<script src="/evidence.js"></script>
 </body>
 </html>
