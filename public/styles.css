@@ -44,14 +44,17 @@ body {
 .title h1 { margin: 0; font-size: 1.35rem; }
 .title p { margin: 4px 0 0; color: var(--muted); font-size: 0.95rem; }
 .shell {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
   gap: 20px;
 }
-.card {
+
+.shell.shell-with-evidence {
+  grid-template-columns: 1.15fr 0.75fr 0.85fr;
+}.card {
   background: linear-gradient(180deg, rgba(13, 27, 45, 0.94), rgba(9, 18, 32, 0.96));
   border: 1px solid var(--line);
   border-radius: var(--radius);
