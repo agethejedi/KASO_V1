@@ -33,6 +33,76 @@ let realtimeState = {
   assistantBuffer: '',
 };
 
+// ─── CASE STATE (new) ─────────────────────────────────────────────────────────
+let currentCaseId = null;
+let caseUserData = null; // set by intake modal before startSession()
+
+// ─── CASE API HELPERS ─────────────────────────────────────────────────────────
+
+async function openCase(userData, playbook) {
+  try {
+    const resp = await fetch('/api/cases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user: {
+          first: userData.first || '',
+          last:  userData.last  || '',
+          email: userData.email || '',
+          phone: userData.phone || '',
+        },
+        playbook: {
+          id:   playbook.id   || '',
+          name: playbook.name || '',
+        },
+      }),
+    });
+    const data = await resp.json();
+    if (data.ok && data.caseId) {
+      currentCaseId = data.caseId;
+      updateCaseChip(currentCaseId);
+      showCaseToast(currentCaseId, userData.email);
+      return data.caseId;
+    }
+  } catch (err) {
+    console.warn('Case open failed (non-blocking):', err);
+  }
+  return null;
+}
+
+async function saveCase(updates) {
+  if (!currentCaseId) return;
+  try {
+    await fetch('/api/cases', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: currentCaseId, ...updates }),
+    });
+  } catch (err) {
+    console.warn('Case save failed (non-blocking):', err);
+  }
+}
+
+function updateCaseChip(caseId) {
+  const chip   = $('caseChip');
+  const chipId = $('caseChipId');
+  if (chip && chipId) {
+    chipId.textContent = caseId;
+    chip.style.display = 'flex';
+  }
+}
+
+function showCaseToast(caseId, email) {
+  const toast      = $('caseToast');
+  const toastCaseId = $('caseToastId');
+  if (!toast) return;
+  if (toastCaseId) toastCaseId.textContent = `${caseId} · ${email}`;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 5000);
+}
+
+// ─── ORIGINAL HELPERS (unchanged) ─────────────────────────────────────────────
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -226,8 +296,8 @@ function initRecognition() {
 
 function normalizeYesNo(text) {
   const t = text.toLowerCase();
-  if (/(yes|yeah|yep|i did|currently|correct|true|affirmative|sure|that happened|it did)/.test(t)) return 'yes';
-  if (/(no|nope|not at all|did not|false|negative|never|it did not|don't think so)/.test(t)) return 'no';
+  if (/(yes|yeah|yep|i did|currently|correct|true|affirmative|sure|that happened|it did)/.test(t)) return 'yes';
+  if (/(no|nope|not at all|did not|false|negative|never|it did not|don't think so)/.test(t)) return 'no';
   return 'unsure';
 }
 
@@ -291,9 +361,21 @@ async function finishSession() {
   if (selectedMode() === 'guided') {
     await speak('Thank you. I am evaluating the responses now.');
   }
-  await evaluateCurrentSession();
+  const result = await evaluateCurrentSession();
   setStatus('Completed');
   setMicState('connected', 'Session completed', 'Review the scorecard and next steps.');
+
+  // ── HOOK 3 — save completed case to KV ──────────────────────────────────────
+  await saveCase({
+    status:         'complete',
+    score:          result.score,
+    level:          result.level,
+    recommendation: result.recommendation,
+    matchedFactors: result.matchedFactors,
+    nextSteps:      result.nextSteps,
+    transcript:     transcriptLog,
+    evidence:       window.__evidenceLog || [],
+  });
 }
 
 function renderDecision(result) {
@@ -356,7 +438,7 @@ function buildRealtimeInstructions(playbook) {
     const cues = Array.isArray(factor.positiveCues) && factor.positiveCues.length
       ? ` Positive cues include: ${factor.positiveCues.join(', ')}.`
       : '';
-    return `${idx + 1}. ${factor.name}: ask about ${factor.question}${cues} Weight ${factor.weight}.`; 
+    return `${idx + 1}. ${factor.name}: ask about ${factor.question}${cues} Weight ${factor.weight}.`;
   }).join('\n');
 
   const hardStops = (playbook?.hardStops || []).length
@@ -389,9 +471,11 @@ async function startRealtimeSession() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      playbookId: playbook.id,
+      playbookId:   playbook.id,
       instructions: buildRealtimeInstructions(playbook),
-    })
+      // ── HOOK 2 — pass caseId to realtime session ──────────────────────────
+      caseId:       currentCaseId,
+    }),
   });
   const tokenData = await tokenResp.json();
   if (!tokenResp.ok || !tokenData.value) {
@@ -505,22 +589,34 @@ async function startGuidedSession() {
 }
 
 async function startSession() {
+  // ── HOOK 1 — require intake before session starts ─────────────────────────
+  if (!caseUserData) {
+    showIntakeModal();
+    return;
+  }
+
   stopSession({ silent: true });
   currentPlaybook = playbooks.find((p) => p.id === playbookSelect.value) || playbooks[0] || null;
   $('playbookValue').textContent = currentPlaybook?.name || '—';
   transcriptEl.innerHTML = '';
   transcriptLog = [];
+  window.__evidenceLog = [];
   answers = {};
   factorIndex = 0;
   sessionActive = true;
   awaitingAnswer = false;
   markQuickAnswer('');
   renderDecision({ score: 0, level: 'minimal', recommendation: 'In progress', matchedFactors: [], nextSteps: [] });
+
   if (!currentPlaybook) {
     appendBubble('No playbook loaded.', 'system');
     setStatus('No playbook loaded');
     return;
   }
+
+  // Open the case in KV before voice starts
+  await openCase(caseUserData, currentPlaybook);
+
   renderModeUI();
   if (selectedMode() === 'guided') {
     await startGuidedSession();
@@ -538,25 +634,81 @@ function disconnectRealtime() {
 
 function stopSession(options = {}) {
   const { silent = false } = options;
+  const wasActive = sessionActive;
   sessionActive = false;
   awaitingAnswer = false;
   stopListening();
   stopSpeaking();
   disconnectRealtime();
+
+  // ── HOOK 4 — save abandoned case if stopped early ─────────────────────────
+  if (wasActive && currentCaseId) {
+    saveCase({
+      status:     'abandoned',
+      transcript: transcriptLog,
+      evidence:   window.__evidenceLog || [],
+    });
+  }
+
   if (!silent) {
     setStatus('Stopped');
     setMicState('connected', 'Stopped', 'You can evaluate the transcript or start a new session.');
   }
 }
 
+// ─── INTAKE MODAL ─────────────────────────────────────────────────────────────
+
+function showIntakeModal() {
+  const modal = $('intakeModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function hideIntakeModal() {
+  const modal = $('intakeModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function initIntakeModal() {
+  const form = $('intakeForm');
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const first = $('intakeFirst').value.trim();
+    const last  = $('intakeLast').value.trim();
+    const email = $('intakeEmail').value.trim();
+    const phone = $('intakePhone').value.trim();
+
+    if (!first || !email) return;
+
+    caseUserData = { first, last, email, phone };
+
+    // Update user strip in the UI
+    const stripName    = $('userStripName');
+    const stripContact = $('userStripContact');
+    const strip        = $('userStrip');
+    if (stripName)    stripName.textContent    = `${first} ${last}`.toUpperCase();
+    if (stripContact) stripContact.textContent = email + (phone ? ` · ${phone}` : '');
+    if (strip)        strip.style.display      = 'flex';
+
+    hideIntakeModal();
+    await startSession();
+  });
+}
+
+// ─── EVENT LISTENERS (unchanged from original) ────────────────────────────────
+
 window.speechSynthesis.onvoiceschanged = populateVoices;
+
 $('startBtn').addEventListener('click', () => startSession().catch((err) => {
   console.error(err);
   appendBubble(`Start failed: ${err.message}`, 'system');
   setStatus('Start failed');
   setMicState('error', 'Start failed', 'Check browser permissions and configuration.');
 }));
+
 $('stopBtn').addEventListener('click', () => stopSession());
+
 $('evaluateBtn').addEventListener('click', async () => {
   if (!currentPlaybook) return;
   setStatus('Evaluating');
@@ -564,13 +716,16 @@ $('evaluateBtn').addEventListener('click', async () => {
   await evaluateCurrentSession();
   setStatus('Evaluated');
 });
+
 $('submitManualAnswerBtn').addEventListener('click', () => submitManualAnswer());
+
 manualAnswerInput.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') {
     event.preventDefault();
     submitManualAnswer();
   }
 });
+
 document.querySelectorAll('.quick-btn').forEach((btn) => {
   btn.addEventListener('click', async () => {
     if (!sessionActive || selectedMode() !== 'guided') return;
@@ -579,11 +734,15 @@ document.querySelectorAll('.quick-btn').forEach((btn) => {
     await handleUserAnswer(humanText, btn.dataset.answer);
   });
 });
+
 voiceModeSelect.addEventListener('change', renderModeUI);
+
 playbookSelect.addEventListener('change', () => {
   currentPlaybook = playbooks.find((p) => p.id === playbookSelect.value) || null;
   $('playbookValue').textContent = currentPlaybook?.name || '—';
 });
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
 
 (async function init() {
   await loadPlaybooks();
@@ -592,6 +751,5 @@ playbookSelect.addEventListener('change', () => {
   setStatus('Idle');
   setMicState('connected', 'Idle', 'Press start to begin a guided or Realtime session.');
   renderDecision({ score: 0, level: 'minimal', recommendation: 'Not evaluated', matchedFactors: [], nextSteps: [] });
+  initIntakeModal();
 })();
-
-
