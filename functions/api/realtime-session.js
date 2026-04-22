@@ -16,33 +16,51 @@ export async function onRequestOptions() {
 
 export async function onRequestPost(context) {
   const { env, request } = context;
+
   if (!env.OPENAI_API_KEY) {
     return json({ error: 'OPENAI_API_KEY is not configured on the server.' }, { status: 400 });
   }
 
-  const body = await request.json().catch(() => ({}));
-  const model = env.OPENAI_REALTIME_MODEL || 'gpt-realtime';
-  const voice = env.OPENAI_REALTIME_VOICE || 'marin';
+  const body         = await request.json().catch(() => ({}));
+  const model        = env.OPENAI_REALTIME_MODEL || 'gpt-4o-realtime-preview';
+  const voice        = env.OPENAI_REALTIME_VOICE || 'alloy';
   const instructions = body?.instructions || 'You are a calm fraud response voice agent.';
 
   const response = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${env.OPENAI_API_KEY}`,
-      'Content-Type': 'application/json'
+      Authorization:  `Bearer ${env.OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       session: {
-        type: 'realtime',
+        type:         'realtime',
         model,
         instructions,
+
+        // ── Enable user speech transcription ──────────────────────────────
+        // Without this, conversation.item.input_audio_transcription.completed
+        // never fires and the user side of the transcript is never captured.
+        input_audio_transcription: {
+          model: 'whisper-1',
+        },
+
+        // ── Turn detection ────────────────────────────────────────────────
+        // server_vad gives the most reliable turn detection for fraud interviews.
+        turn_detection: {
+          type:              'server_vad',
+          threshold:          0.5,
+          prefix_padding_ms:  300,
+          silence_duration_ms: 600,
+        },
+
         audio: {
           output: {
-            voice
-          }
-        }
-      }
-    })
+            voice,
+          },
+        },
+      },
+    }),
   });
 
   const rawText = await response.text();
@@ -55,19 +73,19 @@ export async function onRequestPost(context) {
 
   if (!response.ok) {
     return json({
-      error: parsed?.error?.message || 'Failed to create OpenAI Realtime client secret.',
-      details: parsed
+      error:   parsed?.error?.message || 'Failed to create OpenAI Realtime client secret.',
+      details: parsed,
     }, { status: response.status });
   }
 
-  const value = parsed?.client_secret?.value || parsed?.value || null;
+  const value     = parsed?.client_secret?.value     || parsed?.value      || null;
   const expiresAt = parsed?.client_secret?.expires_at || parsed?.expires_at || null;
 
   return json({
-    ok: true,
+    ok:         true,
     value,
     expires_at: expiresAt,
     model,
-    voice
+    voice,
   });
 }
