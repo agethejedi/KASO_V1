@@ -268,3 +268,4 @@ This is an automated message — do not reply directly.`;
 
   return json({ ok: true, emailId: resendData.id });
 }
+
