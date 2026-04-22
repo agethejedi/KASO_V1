@@ -1,3 +1,11 @@
+/**
+ * functions/api/realtime-session.js
+ * KASO V1 — OpenAI Realtime ephemeral token via GA API
+ *
+ * POST /api/realtime-session
+ * Returns a short-lived ephemeral key (ek_...) for WebRTC connection.
+ */
+
 function json(data, init = {}) {
   return new Response(JSON.stringify(data, null, 2), {
     headers: {
@@ -22,9 +30,39 @@ export async function onRequestPost(context) {
   }
 
   const body         = await request.json().catch(() => ({}));
-  const model        = env.OPENAI_REALTIME_MODEL || 'gpt-4o-realtime-preview';
-  const voice        = env.OPENAI_REALTIME_VOICE || 'alloy';
+  const model        = env.OPENAI_REALTIME_MODEL || 'gpt-realtime';
+  const voice        = env.OPENAI_REALTIME_VOICE || 'marin';
   const instructions = body?.instructions || 'You are a calm fraud response voice agent.';
+
+  // ── GA API session config (correct structure as of 2025) ──────────────────
+  const sessionConfig = {
+    session: {
+      type:         'realtime',
+      model,
+      instructions,
+
+      // Enable user speech transcription so conversation is captured
+      input_audio_transcription: {
+        model: 'gpt-4o-mini-transcribe',
+      },
+
+      // Server VAD for reliable turn detection in interview-style conversations
+      turn_detection: {
+        type:                'server_vad',
+        threshold:            0.5,
+        prefix_padding_ms:    300,
+        silence_duration_ms:  600,
+        create_response:      true,
+        interrupt_response:   true,
+      },
+
+      audio: {
+        output: {
+          voice,
+        },
+      },
+    },
+  };
 
   const response = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
     method: 'POST',
@@ -32,35 +70,7 @@ export async function onRequestPost(context) {
       Authorization:  `Bearer ${env.OPENAI_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      session: {
-        type:         'realtime',
-        model,
-        instructions,
-
-        // ── Enable user speech transcription ──────────────────────────────
-        // Without this, conversation.item.input_audio_transcription.completed
-        // never fires and the user side of the transcript is never captured.
-        input_audio_transcription: {
-          model: 'whisper-1',
-        },
-
-        // ── Turn detection ────────────────────────────────────────────────
-        // server_vad gives the most reliable turn detection for fraud interviews.
-        turn_detection: {
-          type:              'server_vad',
-          threshold:          0.5,
-          prefix_padding_ms:  300,
-          silence_duration_ms: 600,
-        },
-
-        audio: {
-          output: {
-            voice,
-          },
-        },
-      },
-    }),
+    body: JSON.stringify(sessionConfig),
   });
 
   const rawText = await response.text();
@@ -78,8 +88,13 @@ export async function onRequestPost(context) {
     }, { status: response.status });
   }
 
-  const value     = parsed?.client_secret?.value     || parsed?.value      || null;
-  const expiresAt = parsed?.client_secret?.expires_at || parsed?.expires_at || null;
+  // GA API returns value at top level, not nested under client_secret
+  const value     = parsed?.value
+                 || parsed?.client_secret?.value
+                 || null;
+  const expiresAt = parsed?.expires_at
+                 || parsed?.client_secret?.expires_at
+                 || null;
 
   return json({
     ok:         true,
