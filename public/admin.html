@@ -422,7 +422,10 @@ body::after {
         <!-- Token -->
         <div class="form-grp">
           <label class="f-lbl">ADMIN BEARER TOKEN</label>
-          <input class="f-input" id="adminToken" type="password" placeholder="YOUR BEARER TOKEN" />
+          <div style="display:flex;gap:8px;">
+            <input class="f-input" id="adminToken" type="password" placeholder="YOUR BEARER TOKEN" style="margin-bottom:0;" />
+            <button class="btn btn-teal" style="white-space:nowrap;" onclick="saveToken()">SAVE</button>
+          </div>
         </div>
         <div class="form-2col" style="margin-bottom:12px;">
           <div class="form-grp">
@@ -506,7 +509,13 @@ body::after {
       <div class="card">
         <div class="card-hd"><div class="card-title"><div class="card-dot"></div>GENERAL CONFIG</div></div>
         <div class="card-body">
-          <div class="form-grp"><label class="f-lbl">ADMIN BEARER TOKEN</label><input class="f-input" id="settingsToken" type="password" placeholder="••••••••••••••••••••" oninput="persistToken(this.value)" /></div>
+          <div class="form-grp">
+            <label class="f-lbl">ADMIN BEARER TOKEN</label>
+            <div style="display:flex;gap:8px;">
+              <input class="f-input" id="settingsToken" type="password" placeholder="••••••••••••••••••••" style="margin-bottom:0;" />
+              <button class="btn btn-teal" style="white-space:nowrap;" onclick="saveToken()">SAVE</button>
+            </div>
+          </div>
           <div class="form-grp"><label class="f-lbl">OPENAI REALTIME MODEL</label><input class="f-input" value="gpt-realtime" readonly style="color:var(--text-dim);" /></div>
           <div class="form-grp"><label class="f-lbl">CLOUDFLARE KV — PLAYBOOKS</label><input class="f-input" value="PLAYBOOKS (configured)" readonly style="color:var(--text-dim);" /></div>
           <div class="form-grp"><label class="f-lbl">CLOUDFLARE KV — CASES</label><input class="f-input" value="CASES (configured)" readonly style="color:var(--text-dim);" /></div>
@@ -629,19 +638,34 @@ function getToken() {
 }
 function persistToken(val) {
   sessionStorage.setItem('rxl_admin_token', val);
-  // sync to editor token field
-  const ef = document.getElementById('adminToken');
-  if (ef && ef.value !== val) ef.value = val;
+  // sync both token fields
+  ['adminToken','settingsToken'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.value !== val) el.value = val;
+  });
+}
+
+async function saveToken() {
+  // read from whichever field has a value
+  const val = (document.getElementById('settingsToken')?.value ||
+               document.getElementById('adminToken')?.value || '').trim();
+  if (!val) { showToast('ENTER A TOKEN FIRST', true); return; }
+  persistToken(val);
+  showToast('TOKEN SAVED — LOADING CASES…');
+  await loadCases();
 }
 
 function initTokenFields() {
   const token = getToken();
   ['adminToken','settingsToken'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.value = token;
+    if (el) {
+      el.value = token;
+      el.addEventListener('keydown', async e => {
+        if (e.key === 'Enter') { e.preventDefault(); await saveToken(); }
+      });
+    }
   });
-  document.getElementById('adminToken')?.addEventListener('input', e => persistToken(e.target.value));
-  document.getElementById('settingsToken')?.addEventListener('input', e => persistToken(e.target.value));
 }
 
 // ── CASES ──
