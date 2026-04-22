@@ -33,9 +33,9 @@ let realtimeState = {
   assistantBuffer: '',
 };
 
-// ─── CASE STATE (new) ─────────────────────────────────────────────────────────
+// ─── CASE STATE ───────────────────────────────────────────────────────────────
 let currentCaseId = null;
-let caseUserData = null; // set by intake modal before startSession()
+let caseUserData = null;
 
 // ─── CASE API HELPERS ─────────────────────────────────────────────────────────
 
@@ -108,7 +108,7 @@ function updateCaseChip(caseId) {
 }
 
 function showCaseToast(caseId, email) {
-  const toast      = $('caseToast');
+  const toast       = $('caseToast');
   const toastCaseId = $('caseToastId');
   if (!toast) return;
   if (toastCaseId) toastCaseId.textContent = `${caseId} · ${email}`;
@@ -116,7 +116,7 @@ function showCaseToast(caseId, email) {
   setTimeout(() => toast.classList.remove('show'), 5000);
 }
 
-// ─── ORIGINAL HELPERS (unchanged) ─────────────────────────────────────────────
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -143,7 +143,7 @@ function setStatus(text) {
 function setMicState(state, headline, subtext) {
   document.body.dataset.micState = state;
   if (headline) micHeadline.textContent = headline;
-  if (subtext) micSubtext.textContent = subtext;
+  if (subtext)  micSubtext.textContent  = subtext;
 }
 
 function populateVoices() {
@@ -166,19 +166,11 @@ function renderModeUI() {
 
 function stopListening() {
   if (!recognition || !recognitionActive) return;
-  try {
-    recognition.stop();
-  } catch (err) {
-    console.warn('Recognition stop failed:', err);
-  }
+  try { recognition.stop(); } catch (err) { console.warn('Recognition stop failed:', err); }
 }
 
 function stopSpeaking() {
-  try {
-    window.speechSynthesis.cancel();
-  } catch (err) {
-    console.warn('speechSynthesis.cancel failed:', err);
-  }
+  try { window.speechSynthesis.cancel(); } catch (err) { console.warn('speechSynthesis.cancel failed:', err); }
   isSpeaking = false;
 }
 
@@ -186,7 +178,7 @@ async function playListeningCue() {
   try {
     audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') await audioCtx.resume();
-    const osc = audioCtx.createOscillator();
+    const osc  = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.connect(gain);
     gain.connect(audioCtx.destination);
@@ -194,13 +186,11 @@ async function playListeningCue() {
     osc.frequency.value = 880;
     gain.gain.value = 0.0001;
     const now = audioCtx.currentTime;
-    gain.gain.exponentialRampToValueAtTime(0.04, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.04,    now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001,  now + 0.12);
     osc.start(now);
     osc.stop(now + 0.12);
-  } catch (err) {
-    console.warn('Listening cue unavailable:', err);
-  }
+  } catch (err) { console.warn('Listening cue unavailable:', err); }
 }
 
 function speak(text, options = {}) {
@@ -216,30 +206,17 @@ function speak(text, options = {}) {
     try { window.speechSynthesis.cancel(); } catch {}
     await sleep(preDelay);
     const utter = new SpeechSynthesisUtterance(text);
-    const idx = Number(voiceSelect.value || 0);
+    const idx   = Number(voiceSelect.value || 0);
     if (voices[idx]) utter.voice = voices[idx];
-    utter.rate = 1;
+    utter.rate  = 1;
     utter.pitch = 1;
-    isSpeaking = true;
+    isSpeaking  = true;
     setMicState('speaking', 'Agent speaking', 'Please wait for the tone or listening state before answering.');
     suppressRecognitionUntil = Date.now() + preDelay + postDelay + 400;
-    utter.onend = async () => {
-      isSpeaking = false;
-      await sleep(postDelay);
-      resolve();
-    };
-    utter.onerror = async () => {
-      isSpeaking = false;
-      await sleep(postDelay);
-      resolve();
-    };
-    try {
-      window.speechSynthesis.speak(utter);
-    } catch {
-      isSpeaking = false;
-      await sleep(postDelay);
-      resolve();
-    }
+    utter.onend = async () => { isSpeaking = false; await sleep(postDelay); resolve(); };
+    utter.onerror = async () => { isSpeaking = false; await sleep(postDelay); resolve(); };
+    try { window.speechSynthesis.speak(utter); }
+    catch { isSpeaking = false; await sleep(postDelay); resolve(); }
   });
 }
 
@@ -250,11 +227,11 @@ function getCurrentFactor() {
 async function loadPlaybooks() {
   const resp = await fetch('/api/playbooks');
   const data = await resp.json();
-  playbooks = data.playbooks || [];
+  playbooks  = data.playbooks || [];
   playbookSelect.innerHTML = '';
   playbooks.forEach((p) => {
     const opt = document.createElement('option');
-    opt.value = p.id;
+    opt.value       = p.id;
     opt.textContent = p.name;
     playbookSelect.appendChild(opt);
   });
@@ -269,10 +246,10 @@ function initRecognition() {
     return null;
   }
   const rec = new SR();
-  rec.lang = 'en-US';
-  rec.interimResults = false;
+  rec.lang            = 'en-US';
+  rec.interimResults  = false;
   rec.maxAlternatives = 1;
-  rec.continuous = false;
+  rec.continuous      = false;
 
   rec.onresult = async (event) => {
     const transcript = event.results?.[0]?.[0]?.transcript?.trim();
@@ -280,7 +257,7 @@ function initRecognition() {
     if (!transcript) return;
     if (isSpeaking || Date.now() < suppressRecognitionUntil) return;
     appendBubble(transcript, 'user');
-    awaitingAnswer = false;
+    awaitingAnswer      = false;
     manualAnswerInput.value = '';
     await handleUserAnswer(transcript);
   };
@@ -312,7 +289,7 @@ function initRecognition() {
 function normalizeYesNo(text) {
   const t = text.toLowerCase();
   if (/(yes|yeah|yep|i did|currently|correct|true|affirmative|sure|that happened|it did)/.test(t)) return 'yes';
-  if (/(no|nope|not at all|did not|false|negative|never|it did not|don't think so)/.test(t)) return 'no';
+  if (/(no|nope|not at all|did not|false|negative|never|it did not|don't think so)/.test(t))       return 'no';
   return 'unsure';
 }
 
@@ -324,7 +301,7 @@ async function listenForAnswer() {
   if (recognitionActive) return;
   try {
     recognitionActive = true;
-    awaitingAnswer = true;
+    awaitingAnswer    = true;
     setStatus('Listening…');
     setMicState('listening', 'Listening', 'Answer after the tone. Quick buttons and typed fallback stay available.');
     await playListeningCue();
@@ -340,10 +317,7 @@ async function listenForAnswer() {
 
 async function askCurrentQuestion() {
   const factor = getCurrentFactor();
-  if (!factor) {
-    await finishSession();
-    return;
-  }
+  if (!factor) { await finishSession(); return; }
   currentQuestionEl.textContent = factor.question;
   awaitingAnswer = false;
   await speak(factor.question);
@@ -351,12 +325,16 @@ async function askCurrentQuestion() {
   await listenForAnswer();
 }
 
+// ─── CHANGE 1: scoreTranscriptWithClaude ─────────────────────────────────────
+// Calls /api/score-transcript to extract structured yes/no/unsure answers
+// from a Realtime session transcript, then merges them into answers{}.
+
 async function scoreTranscriptWithClaude() {
   if (!transcriptLog.length || !currentPlaybook?.factors?.length) return;
   try {
     setMicState('connected', 'Analysing transcript', 'Claude is extracting structured answers from the conversation…');
     const resp = await fetch('/api/score-transcript', {
-      method: 'POST',
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         transcript: transcriptLog,
@@ -365,31 +343,32 @@ async function scoreTranscriptWithClaude() {
     });
     const data = await resp.json();
     if (data.ok && data.answers) {
-      // Merge Claude's extracted answers into the answers object
       Object.assign(answers, data.answers);
-      console.log('[KASO] Transcript scored by Claude:', data.answers);
-      console.log('[KASO] Reasoning:', data.reasoning);
+      if (data.summary) appendBubble(`Analysis: ${data.summary}`, 'system');
+      console.log('[KASO] Transcript scored — confidence:', data.confidence, '| answers:', data.answers);
     }
   } catch (err) {
     console.warn('Transcript scoring failed (non-blocking):', err);
   }
 }
 
+// ─── CHANGE 2: evaluateCurrentSession — Realtime path ────────────────────────
+// For Realtime mode, extract structured answers before running the evaluator.
+
 async function evaluateCurrentSession() {
-  // If in Realtime mode and transcript has content, extract structured answers first
   if (selectedMode() === 'realtime' && transcriptLog.length > 0) {
     await scoreTranscriptWithClaude();
   }
 
   const payload = {
-    playbook: currentPlaybook,
+    playbook:       currentPlaybook,
     answers,
-    transcriptText: transcriptLog.map((entry) => `${entry.role}: ${entry.text}`).join('\n')
+    transcriptText: transcriptLog.map((entry) => `${entry.role}: ${entry.text}`).join('\n'),
   };
-  const resp = await fetch('/api/evaluate', {
-    method: 'POST',
+  const resp   = await fetch('/api/evaluate', {
+    method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    body:    JSON.stringify(payload),
   });
   const result = await resp.json();
   renderDecision(result);
@@ -397,7 +376,7 @@ async function evaluateCurrentSession() {
 }
 
 async function finishSession() {
-  sessionActive = false;
+  sessionActive  = false;
   awaitingAnswer = false;
   stopListening();
   setStatus('Evaluating');
@@ -409,7 +388,6 @@ async function finishSession() {
   setStatus('Completed');
   setMicState('connected', 'Session completed', 'Review the scorecard and next steps.');
 
-  // ── HOOK 3 — save completed case to KV ──────────────────────────────────────
   await saveCase({
     status:         'complete',
     score:          result.score,
@@ -425,9 +403,9 @@ async function finishSession() {
 function renderDecision(result) {
   $('scoreValue').textContent = String(result.score ?? 0);
   $('levelValue').textContent = result.level ? result.level[0].toUpperCase() + result.level.slice(1) : 'Unknown';
-  $('levelValue').className = `score-${result.level || 'minimal'}`;
+  $('levelValue').className   = `score-${result.level || 'minimal'}`;
   $('recommendationValue').textContent = result.recommendation || '—';
-  $('playbookValue').textContent = currentPlaybook?.name || '—';
+  $('playbookValue').textContent       = currentPlaybook?.name || '—';
   const factorList = $('factorList');
   factorList.innerHTML = '';
   (result.matchedFactors || []).forEach((factor) => {
@@ -441,7 +419,7 @@ function renderDecision(result) {
   steps.innerHTML = '';
   (result.nextSteps || []).forEach((step) => {
     const div = document.createElement('div');
-    div.className = 'step-item';
+    div.className   = 'step-item';
     div.textContent = step;
     steps.appendChild(div);
   });
@@ -450,8 +428,8 @@ function renderDecision(result) {
 async function handleUserAnswer(transcript, forced = null) {
   const factor = getCurrentFactor();
   if (!factor || !sessionActive) return;
-  const normalized = forced || normalizeYesNo(transcript);
-  answers[factor.id] = normalized;
+  const normalized    = forced || normalizeYesNo(transcript);
+  answers[factor.id]  = normalized;
   markQuickAnswer(normalized);
   if (normalized === 'yes' && factor.followUpYes) {
     await speak(factor.followUpYes);
@@ -463,12 +441,8 @@ async function handleUserAnswer(transcript, forced = null) {
   }
   factorIndex += 1;
   const next = getCurrentFactor();
-  if (next) {
-    await sleep(220);
-    await askCurrentQuestion();
-  } else {
-    await finishSession();
-  }
+  if (next) { await sleep(220); await askCurrentQuestion(); }
+  else       { await finishSession(); }
 }
 
 function markQuickAnswer(value) {
@@ -503,21 +477,17 @@ function buildRealtimeInstructions(playbook) {
 
 async function startRealtimeSession() {
   const playbook = currentPlaybook;
-  if (!playbook) {
-    appendBubble('No playbook loaded.', 'system');
-    return;
-  }
+  if (!playbook) { appendBubble('No playbook loaded.', 'system'); return; }
   setStatus('Connecting…');
   setMicState('connected', 'Connecting to OpenAI Realtime', 'Requesting a session token and preparing live voice.');
   appendBubble('Connecting to OpenAI Realtime voice…', 'system');
 
   const tokenResp = await fetch('/api/realtime-session', {
-    method: 'POST',
+    method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       playbookId:   playbook.id,
       instructions: buildRealtimeInstructions(playbook),
-      // ── HOOK 2 — pass caseId to realtime session ──────────────────────────
       caseId:       currentCaseId,
     }),
   });
@@ -529,7 +499,7 @@ async function startRealtimeSession() {
     return;
   }
 
-  const pc = new RTCPeerConnection();
+  const pc          = new RTCPeerConnection();
   const remoteAudio = document.createElement('audio');
   remoteAudio.autoplay = true;
   pc.ontrack = (event) => { remoteAudio.srcObject = event.streams[0]; };
@@ -542,34 +512,26 @@ async function startRealtimeSession() {
     realtimeState.sessionOpen = true;
     setStatus('Realtime live');
     setMicState('connected', 'Realtime connected', 'You can talk naturally. The agent will adapt based on the client response.');
-    const initialMessage = {
+    dc.send(JSON.stringify({
       type: 'response.create',
       response: {
         instructions: `Begin the ${playbook.name} interview now. Greet the client briefly, explain that you will ask a few questions for fraud protection, and then ask the first question.`,
       },
-    };
-    dc.send(JSON.stringify(initialMessage));
+    }));
   });
 
   dc.addEventListener('message', (event) => {
     let payload;
-    try {
-      payload = JSON.parse(event.data);
-    } catch {
-      return;
-    }
+    try { payload = JSON.parse(event.data); } catch { return; }
     handleRealtimeEvent(payload);
   });
 
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
   const sdpResp = await fetch('https://api.openai.com/v1/realtime/calls', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${tokenData.value}`,
-      'Content-Type': 'application/sdp'
-    },
-    body: offer.sdp
+    method:  'POST',
+    headers: { Authorization: `Bearer ${tokenData.value}`, 'Content-Type': 'application/sdp' },
+    body:    offer.sdp,
   });
   if (!sdpResp.ok) {
     const errText = await sdpResp.text();
@@ -606,10 +568,7 @@ function handleRealtimeEvent(event) {
     return;
   }
   if (event.type === 'conversation.item.input_audio_transcription.completed') {
-    if (event.transcript) {
-      appendBubble(event.transcript, 'user');
-      console.log('[KASO Realtime] User turn captured:', event.transcript.slice(0, 60));
-    }
+    if (event.transcript) appendBubble(event.transcript, 'user');
     return;
   }
   if (event.type === 'error') {
@@ -636,22 +595,18 @@ async function startGuidedSession() {
 }
 
 async function startSession() {
-  // ── HOOK 1 — require intake before session starts ─────────────────────────
-  if (!caseUserData) {
-    showIntakeModal();
-    return;
-  }
+  if (!caseUserData) { showIntakeModal(); return; }
 
-  stopSession({ silent: true });
+  pauseSession({ silent: true });
   currentPlaybook = playbooks.find((p) => p.id === playbookSelect.value) || playbooks[0] || null;
   $('playbookValue').textContent = currentPlaybook?.name || '—';
   transcriptEl.innerHTML = '';
-  transcriptLog = [];
-  window.__evidenceLog = [];
-  answers = {};
-  factorIndex = 0;
-  sessionActive = true;
-  awaitingAnswer = false;
+  transcriptLog          = [];
+  window.__evidenceLog   = [];
+  answers                = {};
+  factorIndex            = 0;
+  sessionActive          = true;
+  awaitingAnswer         = false;
   markQuickAnswer('');
   renderDecision({ score: 0, level: 'minimal', recommendation: 'In progress', matchedFactors: [], nextSteps: [] });
 
@@ -661,7 +616,6 @@ async function startSession() {
     return;
   }
 
-  // Open the case in KV before voice starts
   await openCase(caseUserData, currentPlaybook);
 
   renderModeUI();
@@ -679,16 +633,19 @@ function disconnectRealtime() {
   realtimeState = { pc: null, dc: null, stream: null, remoteAudio: null, sessionOpen: false, assistantBuffer: '' };
 }
 
+// ─── CHANGE 3: pauseSession replaces stopSession ──────────────────────────────
+// Saves case as 'paused' instead of 'abandoned' — preserves transcript and
+// evidence so the session can be resumed or evaluated later.
+
 function pauseSession(options = {}) {
   const { silent = false } = options;
   const wasActive = sessionActive;
-  sessionActive = false;
-  awaitingAnswer = false;
+  sessionActive   = false;
+  awaitingAnswer  = false;
   stopListening();
   stopSpeaking();
   disconnectRealtime();
 
-  // Save as paused — preserves transcript and evidence for resumption
   if (wasActive && currentCaseId) {
     saveCase({
       status:     'paused',
@@ -699,11 +656,11 @@ function pauseSession(options = {}) {
 
   if (!silent) {
     setStatus('Paused');
-    setMicState('connected', 'Session paused', 'Your case has been saved. You can evaluate the transcript or resume the session.');
+    setMicState('connected', 'Session paused', 'Press start to resume or evaluate the transcript so far.');
   }
 }
 
-// Keep stopSession as an alias for silent internal use
+// Backward-compatible alias used by startSession({ silent: true })
 function stopSession(options = {}) {
   pauseSession(options);
 }
@@ -735,7 +692,6 @@ function initIntakeModal() {
 
     caseUserData = { first, last, email, phone };
 
-    // Update user strip in the UI
     const stripName    = $('userStripName');
     const stripContact = $('userStripContact');
     const strip        = $('userStrip');
@@ -748,7 +704,7 @@ function initIntakeModal() {
   });
 }
 
-// ─── EVENT LISTENERS (unchanged from original) ────────────────────────────────
+// ─── EVENT LISTENERS ──────────────────────────────────────────────────────────
 
 window.speechSynthesis.onvoiceschanged = populateVoices;
 
@@ -759,6 +715,7 @@ $('startBtn').addEventListener('click', () => startSession().catch((err) => {
   setMicState('error', 'Start failed', 'Check browser permissions and configuration.');
 }));
 
+// CHANGE 3: stop button now calls pauseSession
 $('stopBtn').addEventListener('click', () => pauseSession());
 
 $('evaluateBtn').addEventListener('click', async () => {
@@ -767,15 +724,19 @@ $('evaluateBtn').addEventListener('click', async () => {
   setMicState('connected', 'Evaluating transcript', 'Building a scorecard from the latest session transcript.');
   await evaluateCurrentSession();
   setStatus('Evaluated');
+  // Save evaluated case
+  if (currentCaseId) {
+    saveCase({
+      transcript: transcriptLog,
+      evidence:   window.__evidenceLog || [],
+    });
+  }
 });
 
 $('submitManualAnswerBtn').addEventListener('click', () => submitManualAnswer());
 
 manualAnswerInput.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    submitManualAnswer();
-  }
+  if (event.key === 'Enter') { event.preventDefault(); submitManualAnswer(); }
 });
 
 document.querySelectorAll('.quick-btn').forEach((btn) => {
