@@ -512,6 +512,17 @@ async function startRealtimeSession() {
     realtimeState.sessionOpen = true;
     setStatus('Realtime live');
     setMicState('connected', 'Realtime connected', 'You can talk naturally. The agent will adapt based on the client response.');
+
+    // Enable input audio transcription via data channel
+    // (gpt-realtime model requires this to be set post-connect)
+    dc.send(JSON.stringify({
+      type: 'session.update',
+      session: {
+        input_audio_transcription: { model: 'whisper-1' },
+      },
+    }));
+
+    // Begin the interview
     dc.send(JSON.stringify({
       type: 'response.create',
       response: {
