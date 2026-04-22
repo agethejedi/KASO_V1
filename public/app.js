@@ -351,7 +351,36 @@ async function askCurrentQuestion() {
   await listenForAnswer();
 }
 
+async function scoreTranscriptWithClaude() {
+  if (!transcriptLog.length || !currentPlaybook?.factors?.length) return;
+  try {
+    setMicState('connected', 'Analysing transcript', 'Claude is extracting structured answers from the conversation…');
+    const resp = await fetch('/api/score-transcript', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        transcript: transcriptLog,
+        playbook:   currentPlaybook,
+      }),
+    });
+    const data = await resp.json();
+    if (data.ok && data.answers) {
+      // Merge Claude's extracted answers into the answers object
+      Object.assign(answers, data.answers);
+      console.log('[KASO] Transcript scored by Claude:', data.answers);
+      console.log('[KASO] Reasoning:', data.reasoning);
+    }
+  } catch (err) {
+    console.warn('Transcript scoring failed (non-blocking):', err);
+  }
+}
+
 async function evaluateCurrentSession() {
+  // If in Realtime mode and transcript has content, extract structured answers first
+  if (selectedMode() === 'realtime' && transcriptLog.length > 0) {
+    await scoreTranscriptWithClaude();
+  }
+
   const payload = {
     playbook: currentPlaybook,
     answers,
@@ -577,7 +606,10 @@ function handleRealtimeEvent(event) {
     return;
   }
   if (event.type === 'conversation.item.input_audio_transcription.completed') {
-    if (event.transcript) appendBubble(event.transcript, 'user');
+    if (event.transcript) {
+      appendBubble(event.transcript, 'user');
+      console.log('[KASO Realtime] User turn captured:', event.transcript.slice(0, 60));
+    }
     return;
   }
   if (event.type === 'error') {
@@ -647,7 +679,7 @@ function disconnectRealtime() {
   realtimeState = { pc: null, dc: null, stream: null, remoteAudio: null, sessionOpen: false, assistantBuffer: '' };
 }
 
-function stopSession(options = {}) {
+function pauseSession(options = {}) {
   const { silent = false } = options;
   const wasActive = sessionActive;
   sessionActive = false;
@@ -656,19 +688,24 @@ function stopSession(options = {}) {
   stopSpeaking();
   disconnectRealtime();
 
-  // ── HOOK 4 — save abandoned case if stopped early ─────────────────────────
+  // Save as paused — preserves transcript and evidence for resumption
   if (wasActive && currentCaseId) {
     saveCase({
-      status:     'abandoned',
+      status:     'paused',
       transcript: transcriptLog,
       evidence:   window.__evidenceLog || [],
     });
   }
 
   if (!silent) {
-    setStatus('Stopped');
-    setMicState('connected', 'Stopped', 'You can evaluate the transcript or start a new session.');
+    setStatus('Paused');
+    setMicState('connected', 'Session paused', 'Your case has been saved. You can evaluate the transcript or resume the session.');
   }
+}
+
+// Keep stopSession as an alias for silent internal use
+function stopSession(options = {}) {
+  pauseSession(options);
 }
 
 // ─── INTAKE MODAL ─────────────────────────────────────────────────────────────
@@ -722,7 +759,7 @@ $('startBtn').addEventListener('click', () => startSession().catch((err) => {
   setMicState('error', 'Start failed', 'Check browser permissions and configuration.');
 }));
 
-$('stopBtn').addEventListener('click', () => stopSession());
+$('stopBtn').addEventListener('click', () => pauseSession());
 
 $('evaluateBtn').addEventListener('click', async () => {
   if (!currentPlaybook) return;
