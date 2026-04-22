@@ -62,6 +62,21 @@ async function openCase(userData, playbook) {
       currentCaseId = data.caseId;
       updateCaseChip(currentCaseId);
       showCaseToast(currentCaseId, userData.email);
+
+      // Send case confirmation email — non-blocking
+      fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          caseId:    data.caseId,
+          firstName: userData.first,
+          lastName:  userData.last,
+          email:     userData.email,
+          playbook:  playbook?.name || '',
+          createdAt: data.createdAt,
+        }),
+      }).catch(err => console.warn('Email send failed (non-blocking):', err));
+
       return data.caseId;
     }
   } catch (err) {
