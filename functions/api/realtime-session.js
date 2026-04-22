@@ -41,12 +41,8 @@ export async function onRequestPost(context) {
       model,
       instructions,
 
-      // Enable user speech transcription so conversation is captured
-      input_audio_transcription: {
-        model: 'gpt-4o-mini-transcribe',
-      },
-
       // Server VAD for reliable turn detection in interview-style conversations
+      // Note: input_audio_transcription is enabled via data channel after connect
       turn_detection: {
         type:                'server_vad',
         threshold:            0.5,
