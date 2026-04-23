@@ -769,13 +769,19 @@ $('evaluateBtn').addEventListener('click', async () => {
   if (!currentPlaybook) return;
   setStatus('Evaluating');
   setMicState('connected', 'Evaluating transcript', 'Building a scorecard from the latest session transcript.');
-  await evaluateCurrentSession();
+  const result = await evaluateCurrentSession();
   setStatus('Evaluated');
-  // Save evaluated case
-  if (currentCaseId) {
+  // Save score, transcript and evidence to KV
+  if (currentCaseId && result) {
     saveCase({
-      transcript: transcriptLog,
-      evidence:   window.__evidenceLog || [],
+      status:         'complete',
+      score:          result.score,
+      level:          result.level,
+      recommendation: result.recommendation,
+      matchedFactors: result.matchedFactors,
+      nextSteps:      result.nextSteps,
+      transcript:     transcriptLog,
+      evidence:       window.__evidenceLog || [],
     });
   }
 });
