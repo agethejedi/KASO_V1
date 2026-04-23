@@ -540,29 +540,33 @@ async function startRealtimeSession() {
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
 
-  // Proxy the SDP through our Cloudflare Worker to avoid CORS
-  const sdpResp = await fetch('/api/realtime-sdp', {
+  // Call OpenAI SDP endpoint directly with ephemeral token
+  const sdpResp = await fetch('https://api.openai.com/v1/realtime/calls', {
     method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ sdp: offer.sdp, token: tokenData.value }),
+    headers: {
+      'Authorization': `Bearer ${tokenData.value}`,
+      'Content-Type':  'application/sdp',
+    },
+    body: offer.sdp,
   });
   if (!sdpResp.ok) {
-    const errData = await sdpResp.json().catch(() => ({}));
-    appendBubble(`Realtime connection failed: ${errData.detail || errData.error || 'SDP exchange failed'}`, 'system');
+    const errText = await sdpResp.text();
+    appendBubble(`Realtime connection failed: ${errText}`, 'system');
     setStatus('Realtime failed');
     setMicState('error', 'Realtime failed', 'Switch back to guided mode or check your OpenAI settings.');
     localStream.getTracks().forEach((t) => t.stop());
     pc.close();
     return;
   }
-  const answerSdp = await sdpResp.text();
-  const answer    = { type: 'answer', sdp: answerSdp };
+  const answer = { type: 'answer', sdp: await sdpResp.text() };
   await pc.setRemoteDescription(answer);
   realtimeState = { pc, dc, stream: localStream, remoteAudio, sessionOpen: true, assistantBuffer: '' };
 }
 
 function handleRealtimeEvent(event) {
   if (!event?.type) return;
+  // Temporary logging — remove after transcript capture is confirmed working
+  console.log('[RT EVENT]', event.type, JSON.stringify(event).slice(0, 200));
   if (event.type === 'output_audio_buffer.started' || event.type === 'response.audio.delta') {
     setMicState('speaking', 'Agent speaking', 'OpenAI voice is responding. Wait for a natural pause before interrupting.');
     return;
