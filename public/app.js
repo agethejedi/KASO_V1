@@ -515,13 +515,13 @@ async function startRealtimeSession() {
 
     // Enable input audio transcription via data channel
     // (gpt-realtime model requires this to be set post-connect)
-    dc.send(JSON.stringify({
-      type: 'session.update',
-      session: {
-        input_audio_transcription: { model: 'whisper-1' },
-      },
-    }));
-
+   dc.send(JSON.stringify({
+  type: 'session.update',
+  session: {
+    type: 'realtime',
+    input_audio_transcription: { model: 'whisper-1' },
+  },
+}));
     // Begin the interview
     dc.send(JSON.stringify({
       type: 'response.create',
