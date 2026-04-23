@@ -513,15 +513,25 @@ async function startRealtimeSession() {
     setStatus('Realtime live');
     setMicState('connected', 'Realtime connected', 'You can talk naturally. The agent will adapt based on the client response.');
 
-    // Enable input audio transcription via data channel
-    // (gpt-realtime model requires this to be set post-connect)
-   dc.send(JSON.stringify({
-  type: 'session.update',
-  session: {
-    type: 'realtime',
-    input_audio_transcription: { model: 'whisper-1' },
-  },
-}));
+    // Enable user speech transcription using GA API nested audio format
+    dc.send(JSON.stringify({
+      type: 'session.update',
+      session: {
+        type: 'realtime',
+        audio: {
+          input: {
+            transcription: { model: 'whisper-1' },
+            turn_detection: {
+              type: 'server_vad',
+              threshold: 0.5,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 600,
+            },
+          },
+        },
+      },
+    }));
+
     // Begin the interview
     dc.send(JSON.stringify({
       type: 'response.create',
@@ -575,18 +585,37 @@ function handleRealtimeEvent(event) {
     setMicState('connected', 'Realtime connected', 'The agent is ready for the next client response.');
     return;
   }
-  if (event.type === 'response.audio_transcript.delta' || event.type === 'response.output_text.delta') {
+  // GA API event names for agent transcript
+  if (event.type === 'response.output_audio_transcript.delta' ||
+      event.type === 'response.audio_transcript.delta' ||
+      event.type === 'response.output_text.delta') {
     realtimeState.assistantBuffer += event.delta || '';
     return;
   }
-  if (event.type === 'response.audio_transcript.done' || event.type === 'response.output_text.done') {
+  if (event.type === 'response.output_audio_transcript.done' ||
+      event.type === 'response.audio_transcript.done' ||
+      event.type === 'response.output_text.done') {
     const text = (event.transcript || event.text || realtimeState.assistantBuffer || '').trim();
     if (text) appendBubble(text, 'agent');
     realtimeState.assistantBuffer = '';
     return;
   }
-  if (event.type === 'conversation.item.input_audio_transcription.completed') {
-    if (event.transcript) appendBubble(event.transcript, 'user');
+  // GA API event names for user transcript
+  if (event.type === 'conversation.item.input_audio_transcription.completed' ||
+      event.type === 'conversation.item.input_audio_transcription.done') {
+    const text = event.transcript || event.text || '';
+    if (text) appendBubble(text, 'user');
+    return;
+  }
+  // conversation.item.done captures agent text when audio transcript not available
+  if (event.type === 'conversation.item.done') {
+    const content = event.item?.content || [];
+    content.forEach(c => {
+      if (c.transcript && !realtimeState.assistantBuffer) {
+        appendBubble(c.transcript, 'agent');
+      }
+    });
+    realtimeState.assistantBuffer = '';
     return;
   }
   if (event.type === 'error') {
