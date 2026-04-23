@@ -11,6 +11,8 @@
   // ─── State ──────────────────────────────────────────────────────────────────
   window.__evidenceLog = [];
   let selectedPlatform = 'Facebook';
+  let selectedPhonePlatform = 'WhatsApp';
+  let selectedMessageType = 'Text/SMS';
   let cryptoFieldCount = 0;
   const MAX_CRYPTO = 5;
 
@@ -393,6 +395,102 @@
 
       analyzeCryptoBtn.disabled = false;
       analyzeCryptoBtn.textContent = 'Analyze addresses →';
+    });
+  }
+
+  // ─── PHONE ANALYSIS ──────────────────────────────────────────────────────────
+
+  document.querySelectorAll('[data-phone-platform]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-phone-platform]').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedPhonePlatform = btn.dataset.phonePlatform;
+    });
+  });
+
+  const analyzePhoneBtn = $('evAnalyzePhoneBtn');
+  if (analyzePhoneBtn) {
+    analyzePhoneBtn.addEventListener('click', async () => {
+      const phone = $('evPhoneInput').value.trim();
+      if (!phone) return;
+
+      const resultEl = $('evPhoneResult');
+      analyzePhoneBtn.disabled = true;
+      analyzePhoneBtn.textContent = 'Analyzing…';
+      resultEl.style.display = 'block';
+      resultEl.innerHTML = scanningHTML(phone);
+
+      try {
+        const r = await analyze({ type: 'phone', phone, platform: selectedPhonePlatform });
+        const source = `${selectedPhonePlatform}: ${phone}`;
+        resultEl.innerHTML = resultHTML(r.verdict, r.risk_score, source, r.findings, actionHTML(r.verdict));
+        addToLog('phone', source, r);
+      } catch (e) {
+        resultEl.innerHTML = errorHTML('Phone analysis failed — note the number manually.');
+      }
+
+      analyzePhoneBtn.disabled = false;
+      analyzePhoneBtn.textContent = 'Analyze';
+    });
+  }
+
+  // ─── MESSAGE ANALYSIS ─────────────────────────────────────────────────────────
+
+  document.querySelectorAll('[data-msg-type]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-msg-type]').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedMessageType = btn.dataset.msgType;
+    });
+  });
+
+  const analyzeMessageBtn = $('evAnalyzeMessageBtn');
+  if (analyzeMessageBtn) {
+    analyzeMessageBtn.addEventListener('click', async () => {
+      const message = $('evMessageInput').value.trim();
+      if (!message) return;
+
+      const resultEl = $('evMessageResult');
+      analyzeMessageBtn.disabled = true;
+      analyzeMessageBtn.textContent = 'Analyzing…';
+      resultEl.style.display = 'block';
+      resultEl.innerHTML = scanningHTML('Message');
+
+      try {
+        const r = await analyze({ type: 'message', message, messageType: selectedMessageType });
+        const preview = message.slice(0, 60) + (message.length > 60 ? '…' : '');
+        const source  = `${selectedMessageType}: "${preview}"`;
+
+        const scamBadge = r.scam_type && r.scam_type !== 'unknown'
+          ? `<div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--amber);margin-bottom:8px;">SCAM TYPE: ${r.scam_type.replace('_',' ')}</div>`
+          : '';
+
+        const patternsHTML = (r.language_patterns || []).length
+          ? `<div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);margin-bottom:8px;">PATTERNS: ${r.language_patterns.join(' · ')}</div>`
+          : '';
+
+        resultEl.innerHTML = `
+          <div class="ev-result-header ev-${r.verdict || 'suspicious'}">
+            <span class="ev-result-dot"></span>
+            <span class="ev-result-status">${(r.verdict || 'suspicious').toUpperCase()}</span>
+            <span class="ev-result-score">${r.risk_score ?? 0}/100</span>
+          </div>
+          <div class="ev-result-body">
+            <div class="ev-result-source">${source}</div>
+            ${scamBadge}
+            ${patternsHTML}
+            <div class="ev-findings">${findingsHTML(r.findings)}</div>
+            ${actionHTML(r.verdict)}
+          </div>`;
+
+        addToLog('message', source, r);
+
+      } catch (e) {
+        resultEl.innerHTML = errorHTML('Message analysis failed — screenshot the message as an alternative.');
+      }
+
+      analyzeMessageBtn.disabled = false;
+      analyzeMessageBtn.textContent = 'Analyze Message →';
     });
   }
 
