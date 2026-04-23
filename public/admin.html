@@ -1010,14 +1010,59 @@ function renderPredefinedOptions() {
 function renderPlaybookOptions() {
   const sel = document.getElementById('adminPlaybookSelect');
   sel.innerHTML = '';
+
+  // Always show "Create New Playbook" as the first option
+  const newOpt = document.createElement('option');
+  newOpt.value = '__new__';
+  newOpt.textContent = '＋ CREATE NEW PLAYBOOK';
+  sel.appendChild(newOpt);
+
   pbState.playbooks.forEach(p => {
     const opt = document.createElement('option');
     opt.value = p.id; opt.textContent = p.name;
     sel.appendChild(opt);
   });
-  currentPlaybook = pbState.playbooks.find(p => p.id === sel.value) || pbState.playbooks[0] || null;
+
+  // Default to first real playbook
+  currentPlaybook = pbState.playbooks[0] || null;
   if (currentPlaybook) sel.value = currentPlaybook.id;
   loadPlaybookIntoForm();
+}
+
+function createNewPlaybook() {
+  // Generate a new empty playbook and set it as current
+  const newId = uniqueId('playbook');
+  const newPlaybook = {
+    id:          newId,
+    name:        '',
+    description: '',
+    thresholds:  { low: 20, moderate: 40, high: 60 },
+    factors:     [],
+  };
+
+  // Add to state and select it
+  pbState.playbooks.push(newPlaybook);
+  currentPlaybook = newPlaybook;
+
+  // Re-render options and select the new one
+  const sel = document.getElementById('adminPlaybookSelect');
+  const opt = document.createElement('option');
+  opt.value = newId;
+  opt.textContent = 'NEW PLAYBOOK';
+  sel.appendChild(opt);
+  sel.value = newId;
+
+  // Clear and focus the form
+  document.getElementById('playbookName').value        = '';
+  document.getElementById('playbookDescription').value = '';
+  document.getElementById('thresholdLow').value        = '20';
+  document.getElementById('thresholdModerate').value   = '40';
+  document.getElementById('thresholdHigh').value       = '60';
+  document.getElementById('factorEditors').innerHTML   = '';
+  document.getElementById('playbookName').focus();
+
+  showMsg('NEW PLAYBOOK CREATED — ADD A NAME AND FACTORS, THEN SAVE.', false);
+  showToast('NEW PLAYBOOK READY');
 }
 
 async function loadPlaybooks() {
@@ -1044,6 +1089,10 @@ function syncPlaybookHeaderFields() {
 });
 
 document.getElementById('adminPlaybookSelect').addEventListener('change', function() {
+  if (this.value === '__new__') {
+    createNewPlaybook();
+    return;
+  }
   currentPlaybook = pbState.playbooks.find(p => p.id === this.value) || null;
   loadPlaybookIntoForm();
 });
@@ -1074,6 +1123,14 @@ document.getElementById('addCustomBtn').addEventListener('click', () => {
 
 async function savePlaybooks() {
   syncPlaybookHeaderFields();
+
+  // Validate new playbook has a name
+  if (currentPlaybook && !currentPlaybook.name.trim()) {
+    showMsg('PLAYBOOK NEEDS A NAME BEFORE SAVING.', true);
+    document.getElementById('playbookName').focus();
+    return;
+  }
+
   const token = getToken();
   if (!token) { showMsg('ADMIN BEARER TOKEN IS REQUIRED TO SAVE.', true); return; }
   pbState.version = Date.now();
@@ -1084,6 +1141,14 @@ async function savePlaybooks() {
   });
   const result = await resp.json();
   if (!resp.ok) { showMsg(result.error || 'SAVE FAILED.', true); return; }
+
+  // Update dropdown label to reflect saved name
+  const sel = document.getElementById('adminPlaybookSelect');
+  const selectedOpt = sel.querySelector(`option[value="${currentPlaybook?.id}"]`);
+  if (selectedOpt && currentPlaybook?.name) {
+    selectedOpt.textContent = currentPlaybook.name;
+  }
+
   showMsg(result.warning || 'DEPLOYED SUCCESSFULLY.', false);
   showToast('PLAYBOOKS DEPLOYED');
 }
