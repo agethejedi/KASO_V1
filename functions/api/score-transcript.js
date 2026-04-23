@@ -119,7 +119,7 @@ Extract yes/no/unsure answers for each factor based solely on the transcript abo
         'content-type':      'application/json',
       },
       body: JSON.stringify({
-        model:      'claude-sonnet-4-20250514',
+        model:      'claude-sonnet-4-6',
         max_tokens: 1000,
         system,
         messages: [{ role: 'user', content: userMsg }],
@@ -158,5 +158,3 @@ Extract yes/no/unsure answers for each factor based solely on the transcript abo
     confidence: parsed.confidence || 'medium',
   });
 }
-
-
