@@ -607,6 +607,8 @@ textarea.ev-input { resize: vertical; min-height: 64px; }
 .ev-log-type-screenshot { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); }
 .ev-log-type-social     { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(245,166,35,0.2); }
 .ev-log-type-crypto     { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(245,166,35,0.2); }
+.ev-log-type-phone      { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); }
+.ev-log-type-message    { background: var(--red-dim);    color: var(--red);    border: 1px solid rgba(255,77,77,0.2); }
 .ev-log-verdict     { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; margin-left: auto; }
 .ev-verdict-dangerous  { color: var(--red); }
 .ev-verdict-suspicious { color: var(--amber); }
@@ -825,6 +827,8 @@ textarea.ev-input { resize: vertical; min-height: 64px; }
       <button class="ev-tab" data-tab="ev-screenshot">📸 SCREENSHOT</button>
       <button class="ev-tab" data-tab="ev-social">👤 SOCIAL</button>
       <button class="ev-tab" data-tab="ev-crypto">₿ CRYPTO</button>
+      <button class="ev-tab" data-tab="ev-phone">📱 PHONE</button>
+      <button class="ev-tab" data-tab="ev-message">💬 MESSAGE</button>
       <button class="ev-tab" data-tab="ev-log">📋 LOG <span id="evLogCount">0</span></button>
     </div>
 
@@ -886,6 +890,44 @@ textarea.ev-input { resize: vertical; min-height: 64px; }
         <button class="ev-add-btn" id="evAddCryptoBtn">+ ADD ADDRESS</button>
         <button class="ev-analyze-btn" id="evAnalyzeCryptoBtn" style="width:100%;margin-top:10px;">ANALYZE ADDRESSES →</button>
         <div class="ev-result" id="evCryptoResult"></div>
+      </div>
+
+      <!-- PHONE -->
+      <div class="ev-pane" id="ev-phone">
+        <label class="ev-label">PHONE NUMBER</label>
+        <p class="ev-hint">ENTER THE PHONE NUMBER USED TO CONTACT YOU. WE CHECK IF IT HAS APPEARED IN OTHER CASES AND ANALYZE FOR KNOWN FRAUD PATTERNS.</p>
+        <div class="ev-input-row">
+          <input id="evPhoneInput" class="ev-input" type="tel" placeholder="+1 (555) 000-0000" />
+          <button class="ev-analyze-btn" id="evAnalyzePhoneBtn">ANALYZE</button>
+        </div>
+        <label class="ev-label" style="margin-top:10px;">PLATFORM USED</label>
+        <div class="ev-platform-grid" style="grid-template-columns:1fr 1fr 1fr;">
+          <button class="ev-platform active" data-phone-platform="WhatsApp">💬 WHATSAPP</button>
+          <button class="ev-platform" data-phone-platform="Telegram">✈️ TELEGRAM</button>
+          <button class="ev-platform" data-phone-platform="SMS">📱 SMS</button>
+          <button class="ev-platform" data-phone-platform="Voice Call">📞 VOICE</button>
+          <button class="ev-platform" data-phone-platform="Signal">🔒 SIGNAL</button>
+          <button class="ev-platform" data-phone-platform="Other">🌐 OTHER</button>
+        </div>
+        <div class="ev-result" id="evPhoneResult"></div>
+      </div>
+
+      <!-- MESSAGE -->
+      <div class="ev-pane" id="ev-message">
+        <label class="ev-label">PASTE MESSAGE</label>
+        <p class="ev-hint">PASTE A TEXT, EMAIL, OR CHAT MESSAGE YOU RECEIVED. AI ANALYZES FOR ROMANCE SCAM SCRIPTS, URGENCY LANGUAGE, IMPERSONATION PATTERNS, AND KNOWN FRAUD TEMPLATES.</p>
+        <textarea id="evMessageInput" class="ev-input" rows="6" placeholder="Paste the message here exactly as you received it…"></textarea>
+        <label class="ev-label" style="margin-top:10px;">MESSAGE TYPE</label>
+        <div class="ev-platform-grid" style="grid-template-columns:1fr 1fr 1fr;">
+          <button class="ev-platform active" data-msg-type="Text/SMS">📱 TEXT</button>
+          <button class="ev-platform" data-msg-type="WhatsApp">💬 WHATSAPP</button>
+          <button class="ev-platform" data-msg-type="Email">📧 EMAIL</button>
+          <button class="ev-platform" data-msg-type="Dating App">💝 DATING APP</button>
+          <button class="ev-platform" data-msg-type="Telegram">✈️ TELEGRAM</button>
+          <button class="ev-platform" data-msg-type="Other">🌐 OTHER</button>
+        </div>
+        <button class="ev-analyze-btn" id="evAnalyzeMessageBtn" style="width:100%;margin-top:10px;">ANALYZE MESSAGE →</button>
+        <div class="ev-result" id="evMessageResult"></div>
       </div>
 
       <!-- LOG -->
