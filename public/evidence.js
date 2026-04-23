@@ -398,25 +398,36 @@
     });
   }
 
-  // ─── PHONE ANALYSIS ──────────────────────────────────────────────────────────
+  // ─── PHONE + MESSAGE — use event delegation on document body ────────────────
+  // Direct listeners fail on hidden panes — delegate from document instead.
 
-  document.querySelectorAll('[data-phone-platform]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-phone-platform]').forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedPhonePlatform = btn.dataset.phonePlatform;
-    });
-  });
+  document.addEventListener('click', async (e) => {
 
-  const analyzePhoneBtn = $('evAnalyzePhoneBtn');
-  if (analyzePhoneBtn) {
-    analyzePhoneBtn.addEventListener('click', async () => {
-      const phone = $('evPhoneInput').value.trim();
+    // Phone platform selector
+    if (e.target.dataset.phonePlatform) {
+      document.querySelectorAll('[data-phone-platform]').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      selectedPhonePlatform = e.target.dataset.phonePlatform;
+      return;
+    }
+
+    // Message type selector
+    if (e.target.dataset.msgType) {
+      document.querySelectorAll('[data-msg-type]').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      selectedMessageType = e.target.dataset.msgType;
+      return;
+    }
+
+    // Phone analyze button
+    if (e.target.id === 'evAnalyzePhoneBtn') {
+      const btn     = e.target;
+      const phone   = $('evPhoneInput')?.value.trim();
       if (!phone) return;
 
       const resultEl = $('evPhoneResult');
-      analyzePhoneBtn.disabled = true;
-      analyzePhoneBtn.textContent = 'Analyzing…';
+      btn.disabled = true;
+      btn.textContent = 'Analyzing…';
       resultEl.style.display = 'block';
       resultEl.innerHTML = scanningHTML(phone);
 
@@ -425,46 +436,34 @@
         const source = `${selectedPhonePlatform}: ${phone}`;
         resultEl.innerHTML = resultHTML(r.verdict, r.risk_score, source, r.findings, actionHTML(r.verdict));
         addToLog('phone', source, r);
-      } catch (e) {
+      } catch (err) {
         resultEl.innerHTML = errorHTML('Phone analysis failed — note the number manually.');
       }
 
-      analyzePhoneBtn.disabled = false;
-      analyzePhoneBtn.textContent = 'Analyze';
-    });
-  }
+      btn.disabled = false;
+      btn.textContent = 'Analyze';
+      return;
+    }
 
-  // ─── MESSAGE ANALYSIS ─────────────────────────────────────────────────────────
-
-  document.querySelectorAll('[data-msg-type]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-msg-type]').forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedMessageType = btn.dataset.msgType;
-    });
-  });
-
-  const analyzeMessageBtn = $('evAnalyzeMessageBtn');
-  if (analyzeMessageBtn) {
-    analyzeMessageBtn.addEventListener('click', async () => {
-      const message = $('evMessageInput').value.trim();
+    // Message analyze button
+    if (e.target.id === 'evAnalyzeMessageBtn') {
+      const btn     = e.target;
+      const message = $('evMessageInput')?.value.trim();
       if (!message) return;
 
       const resultEl = $('evMessageResult');
-      analyzeMessageBtn.disabled = true;
-      analyzeMessageBtn.textContent = 'Analyzing…';
+      btn.disabled = true;
+      btn.textContent = 'Analyzing…';
       resultEl.style.display = 'block';
       resultEl.innerHTML = scanningHTML('Message');
 
       try {
         const r = await analyze({ type: 'message', message, messageType: selectedMessageType });
-        const preview = message.slice(0, 60) + (message.length > 60 ? '…' : '');
-        const source  = `${selectedMessageType}: "${preview}"`;
-
+        const preview   = message.slice(0, 60) + (message.length > 60 ? '…' : '');
+        const source    = `${selectedMessageType}: "${preview}"`;
         const scamBadge = r.scam_type && r.scam_type !== 'unknown'
           ? `<div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--amber);margin-bottom:8px;">SCAM TYPE: ${r.scam_type.replace('_',' ')}</div>`
           : '';
-
         const patternsHTML = (r.language_patterns || []).length
           ? `<div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);margin-bottom:8px;">PATTERNS: ${r.language_patterns.join(' · ')}</div>`
           : '';
@@ -484,14 +483,15 @@
           </div>`;
 
         addToLog('message', source, r);
-
-      } catch (e) {
+      } catch (err) {
         resultEl.innerHTML = errorHTML('Message analysis failed — screenshot the message as an alternative.');
       }
 
-      analyzeMessageBtn.disabled = false;
-      analyzeMessageBtn.textContent = 'Analyze Message →';
-    });
-  }
+      btn.disabled = false;
+      btn.textContent = 'Analyze Message →';
+      return;
+    }
+
+  });
 
 })();
