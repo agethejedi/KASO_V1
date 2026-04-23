@@ -8,10 +8,7 @@ binding    = "PLAYBOOKS"
 id         = "e6e896204f2248b383c3d07c2528a109"
 preview_id = "e6e896204f2248b383c3d07c2528a109"
 
-# ── Cases KV (new) ────────────────────────────────────────────────────────────
-# Create this namespace in the Cloudflare dashboard:
-#   Workers & Pages → KV → Create namespace → name it "kaso-v1-cases"
-# Then paste the namespace IDs below.
+
 [[kv_namespaces]]
 binding    = "CASES"
 id         = "c42242aa5a864fc5ac77003ab5776534"
