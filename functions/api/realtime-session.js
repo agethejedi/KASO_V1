@@ -1,9 +1,6 @@
 /**
  * functions/api/realtime-session.js
  * KASO V1 — OpenAI Realtime ephemeral token via GA API
- *
- * POST /api/realtime-session
- * Returns a short-lived ephemeral key (ek_...) for WebRTC connection.
  */
 
 function json(data, init = {}) {
@@ -12,9 +9,9 @@ function json(data, init = {}) {
       'content-type': 'application/json; charset=utf-8',
       'access-control-allow-origin': '*',
       'access-control-allow-methods': 'POST,OPTIONS',
-      'access-control-allow-headers': 'Content-Type, Authorization'
+      'access-control-allow-headers': 'Content-Type, Authorization',
     },
-    ...init
+    ...init,
   });
 }
 
@@ -34,48 +31,30 @@ export async function onRequestPost(context) {
   const voice        = env.OPENAI_REALTIME_VOICE || 'marin';
   const instructions = body?.instructions || 'You are a calm fraud response voice agent.';
 
-  // ── GA API session config (correct structure as of 2025) ──────────────────
+  // gpt-realtime only accepts minimal config at session creation.
+  // turn_detection and input_audio_transcription are set post-connect
+  // via session.update over the WebRTC data channel in app.js.
   const sessionConfig = {
     session: {
-      type:         'realtime',
+      type:  'realtime',
       model,
       instructions,
-
-      // Server VAD for reliable turn detection in interview-style conversations
-      // Note: input_audio_transcription is enabled via data channel after connect
-      turn_detection: {
-        type:                'server_vad',
-        threshold:            0.5,
-        prefix_padding_ms:    300,
-        silence_duration_ms:  600,
-        create_response:      true,
-        interrupt_response:   true,
-      },
-
       audio: {
-        output: {
-          voice,
-        },
+        output: { voice },
       },
     },
   };
 
   const response = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
-    method: 'POST',
-    headers: {
-      Authorization:  `Bearer ${env.OPENAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(sessionConfig),
+    method:  'POST',
+    headers: { Authorization: `Bearer ${env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+    body:    JSON.stringify(sessionConfig),
   });
 
   const rawText = await response.text();
   let parsed;
-  try {
-    parsed = JSON.parse(rawText);
-  } catch {
-    parsed = { raw: rawText };
-  }
+  try { parsed = JSON.parse(rawText); }
+  catch { parsed = { raw: rawText }; }
 
   if (!response.ok) {
     return json({
@@ -84,19 +63,8 @@ export async function onRequestPost(context) {
     }, { status: response.status });
   }
 
-  // GA API returns value at top level, not nested under client_secret
-  const value     = parsed?.value
-                 || parsed?.client_secret?.value
-                 || null;
-  const expiresAt = parsed?.expires_at
-                 || parsed?.client_secret?.expires_at
-                 || null;
+  const value     = parsed?.value || parsed?.client_secret?.value || null;
+  const expiresAt = parsed?.expires_at || parsed?.client_secret?.expires_at || null;
 
-  return json({
-    ok:         true,
-    value,
-    expires_at: expiresAt,
-    model,
-    voice,
-  });
+  return json({ ok: true, value, expires_at: expiresAt, model, voice });
 }
