@@ -159,8 +159,64 @@ regardless of address history.`;
     content = `Analyze these crypto wallet addresses submitted by a potential fraud victim:\n${addrList}\n\nThese were given to the user by someone asking them to send cryptocurrency.`;
   }
 
+  else if (type === 'phone') {
+    const { phone, platform = 'Unknown' } = body;
+    if (!phone) return json({ error: 'phone is required for type=phone.' }, { status: 400 });
+
+    system = `You are a fraud detection AI analyzing phone numbers submitted by potential fraud victims.
+Respond ONLY with a JSON object, no markdown backticks, no preamble:
+{
+  "verdict": "dangerous"|"suspicious"|"clean",
+  "risk_score": 0-100,
+  "phone_type": "brief description e.g. WhatsApp international number",
+  "findings": [{"severity":"red"|"amber"|"green","text":"specific finding"}],
+  "summary": "one sentence summary",
+  "score_contribution": 0-40
+}
+Analyze for: international numbers masquerading as local, VoIP numbers commonly used by scammers,
+numbers associated with known fraud campaigns, WhatsApp/Telegram numbers from high-risk regions,
+romance scam communication patterns, patterns consistent with mass fraud operations.
+Note: the platform the number was used on is significant context.`;
+
+    content = `Phone number: ${phone}
+Platform used: ${platform}
+
+Analyze this phone number for fraud risk in the context of a potential romance or financial scam.`;
+  }
+
+  else if (type === 'message') {
+    const { message, messageType = 'Unknown' } = body;
+    if (!message) return json({ error: 'message is required for type=message.' }, { status: 400 });
+
+    system = `You are a fraud detection AI analyzing messages submitted by potential fraud victims.
+Respond ONLY with a JSON object, no markdown backticks, no preamble:
+{
+  "verdict": "dangerous"|"suspicious"|"clean",
+  "risk_score": 0-100,
+  "scam_type": "romance"|"phishing"|"impersonation"|"investment"|"tech_support"|"other"|"unknown",
+  "findings": [{"severity":"red"|"amber"|"green","text":"specific finding"}],
+  "language_patterns": ["pattern1","pattern2"],
+  "summary": "one sentence summary",
+  "score_contribution": 0-40
+}
+Analyze for: romance scam scripts (military/doctor/overseas personas, accelerated intimacy, crisis narratives),
+phishing language (urgency, account suspension threats, prize notifications),
+impersonation of banks/IRS/government agencies,
+pig butchering investment scripts (crypto returns, trading platforms),
+tech support scam patterns (virus warnings, remote access requests),
+copy-pasted or templated language suggesting mass fraud operation,
+grammar inconsistencies suggesting non-native speaker using scripts.`;
+
+    content = `Message type: ${messageType}
+
+Message content:
+${message}
+
+Analyze this message for fraud indicators.`;
+  }
+
   else {
-    return json({ error: `Unknown type: ${type}. Must be link | screenshot | social | crypto.` }, { status: 400 });
+    return json({ error: `Unknown type: ${type}. Must be link | screenshot | social | crypto | phone | message.` }, { status: 400 });
   }
 
   // ── Call Anthropic ─────────────────────────────────────────────────────────
