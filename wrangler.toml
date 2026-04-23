@@ -1,13 +1,12 @@
 name = "kaso-v1"
 compatibility_date = "2025-01-15"
+compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "public"
 
-# ── Playbooks KV (existing) ───────────────────────────────────────────────────
 [[kv_namespaces]]
 binding    = "PLAYBOOKS"
 id         = "e6e896204f2248b383c3d07c2528a109"
 preview_id = "e6e896204f2248b383c3d07c2528a109"
-
 
 [[kv_namespaces]]
 binding    = "CASES"
