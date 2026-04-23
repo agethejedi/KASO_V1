@@ -539,21 +539,24 @@ async function startRealtimeSession() {
 
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
-  const sdpResp = await fetch('https://api.openai.com/v1/realtime/calls', {
+
+  // Proxy the SDP through our Cloudflare Worker to avoid CORS
+  const sdpResp = await fetch('/api/realtime-sdp', {
     method:  'POST',
-    headers: { Authorization: `Bearer ${tokenData.value}`, 'Content-Type': 'application/sdp' },
-    body:    offer.sdp,
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ sdp: offer.sdp, token: tokenData.value }),
   });
   if (!sdpResp.ok) {
-    const errText = await sdpResp.text();
-    appendBubble(`Realtime connection failed: ${errText}`, 'system');
+    const errData = await sdpResp.json().catch(() => ({}));
+    appendBubble(`Realtime connection failed: ${errData.detail || errData.error || 'SDP exchange failed'}`, 'system');
     setStatus('Realtime failed');
     setMicState('error', 'Realtime failed', 'Switch back to guided mode or check your OpenAI settings.');
     localStream.getTracks().forEach((t) => t.stop());
     pc.close();
     return;
   }
-  const answer = { type: 'answer', sdp: await sdpResp.text() };
+  const answerSdp = await sdpResp.text();
+  const answer    = { type: 'answer', sdp: answerSdp };
   await pc.setRemoteDescription(answer);
   realtimeState = { pc, dc, stream: localStream, remoteAudio, sessionOpen: true, assistantBuffer: '' };
 }
