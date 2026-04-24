@@ -681,16 +681,37 @@ async function loadCases() {
   }
 
   try {
-    // Load today's cases
-    const resp = await fetch('/api/cases', { headers: { 'Authorization': `Bearer ${token}` } });
-    const data = await resp.json();
-
-    if (!resp.ok) {
-      document.getElementById('dashRecentCases').innerHTML = `<div class="placeholder">${data.error || 'ERROR LOADING CASES.'}</div>`;
-      return;
+    // Load cases across the last 14 days
+    const dates = [];
+    for (let i = 0; i < 14; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      dates.push(d.toISOString().slice(0, 10));
     }
 
-    allCases = data.cases || [];
+    const results = await Promise.all(
+      dates.map(date =>
+        fetch(`/api/cases?date=${date}`, { headers: { 'Authorization': `Bearer ${token}` } })
+          .then(r => r.json())
+          .catch(() => ({ cases: [] }))
+      )
+    );
+
+    // Merge and deduplicate by case ID
+    const seen = new Set();
+    allCases = [];
+    for (const data of results) {
+      for (const c of (data.cases || [])) {
+        if (!seen.has(c.id)) {
+          seen.add(c.id);
+          allCases.push(c);
+        }
+      }
+    }
+
+    // Sort by most recent first
+    allCases.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
     renderDashboardStats();
     renderDashboardRecent();
     renderCaseTable(allCases);
