@@ -401,11 +401,13 @@ export async function onRequestPatch(context) {
   // This is the core evidence persistence fix. Incoming evidence is merged
   // with any existing evidence already saved on the case, deduplicated by
   // type + source + timestamp, and sorted most recent first.
+  let evidenceChanged = false;
   if ('evidence' in body) {
     updated.evidence = mergeEvidence(
       Array.isArray(existing.evidence) ? existing.evidence : [],
       body.evidence
     );
+    evidenceChanged = true;
   }
 
   // ── Status transition ──
@@ -424,6 +426,25 @@ export async function onRequestPatch(context) {
   updated.encryptionVersion = keysObj?.current || existing.encryptionVersion || null;
 
   await putCase(kv, updated, keysObj);
+
+  // ── Cross-session evidence indexing ─────────────────────────────────────────
+  // When evidence changes, index it for cross-case matching.
+  // Non-blocking — indexing failure should not block the case save.
+  if (evidenceChanged && Array.isArray(updated.evidence) && updated.evidence.length > 0) {
+    try {
+      const indexUrl = new URL('/api/evidence-index', request.url).toString();
+      await fetch(indexUrl, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          caseId:   id,
+          evidence: updated.evidence,
+        }),
+      });
+    } catch (err) {
+      console.warn('[KASO] Evidence indexing failed (non-blocking):', err);
+    }
+  }
 
   return json({ ok: true, case: updated });
 }
