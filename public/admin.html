@@ -291,6 +291,30 @@ body::after {
 /* Placeholder */
 .placeholder { color: var(--text-dim); text-align: center; padding: 60px; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; }
 
+/* Intelligence connections — cross-case matches */
+.cd-intel-alert { background: rgba(255,77,77,0.08); border: 1px solid rgba(255,77,77,0.3); border-radius: 4px; padding: 9px 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 9px; }
+.cd-intel-alert-dot { width: 7px; height: 7px; border-radius: 50%; background: #ff4d4d; flex-shrink: 0; animation: cd-pulse 1.5s ease-in-out infinite; }
+@keyframes cd-pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.cd-intel-alert-text { font-family: var(--mono); font-size: 10px; color: #ff4d4d; letter-spacing: 0.5px; flex: 1; }
+.cd-intel-alert-warn { font-size: 13px; color: #ff4d4d; }
+.cd-intel-signal { background: var(--card2); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 6px; overflow: hidden; }
+.cd-intel-signal-hdr { display: flex; align-items: center; gap: 8px; padding: 7px 11px; border-bottom: 1px solid var(--border); }
+.cd-intel-icon { font-size: 11px; width: 20px; height: 20px; border-radius: 3px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.cd-intel-icon.phone   { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); }
+.cd-intel-icon.social  { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(245,166,35,0.25); }
+.cd-intel-icon.crypto  { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(245,166,35,0.25); }
+.cd-intel-icon.url     { background: var(--teal-dim);   color: var(--teal);   border: 1px solid rgba(45,212,191,0.25); }
+.cd-intel-icon.msgtype { background: var(--red-dim);    color: var(--red);    border: 1px solid rgba(255,77,77,0.25); }
+.cd-intel-label { font-family: var(--mono); font-size: 10px; color: var(--text-hi); flex: 1; }
+.cd-intel-meta  { font-family: var(--mono); font-size: 9px; color: var(--text-dim); }
+.cd-intel-rc { display: flex; align-items: center; gap: 8px; padding: 6px 11px; border-bottom: 1px solid var(--card); cursor: pointer; transition: background 0.12s; }
+.cd-intel-rc:last-child { border-bottom: none; }
+.cd-intel-rc:hover { background: var(--teal-glow); }
+.cd-intel-rc-id { font-family: var(--mono); font-size: 10px; color: var(--teal); letter-spacing: 0.5px; flex: 1; }
+.cd-intel-rc-arrow { font-family: var(--mono); font-size: 9px; color: var(--text-dim); }
+.cd-intel-empty { font-family: var(--mono); font-size: 10px; color: var(--text-dim); padding: 8px 0; letter-spacing: 0.5px; }
+.cd-intel-cluster-btn { display: flex; gap: 6px; margin-top: 8px; }
+
 /* Evidence items in case detail */
 .cd-ev-item { padding: 9px 0; border-bottom: 1px solid var(--border); }
 .cd-ev-item:last-child { border-bottom: none; }
@@ -605,6 +629,15 @@ body::after {
     <div class="cd-section" id="cdEvidenceSection">
       <div class="cd-section-lbl">// EVIDENCE INTAKE (<span id="cdEvidenceCount">0</span> SUBMISSIONS)</div>
       <div id="cdEvidence"></div>
+    </div>
+
+    <div class="cd-section" id="cdIntelSection" style="display:none;">
+      <div class="cd-section-lbl">// INTELLIGENCE CONNECTIONS</div>
+      <div id="cdIntelAlert"></div>
+      <div id="cdIntelSignals"></div>
+      <div class="cd-intel-cluster-btn">
+        <button class="btn btn-red" style="flex:1;" onclick="viewAttackCluster()">⚡ VIEW ATTACK CLUSTER</button>
+      </div>
     </div>
 
     <div class="cd-section">
@@ -952,8 +985,100 @@ async function openCase(id) {
       }).join('')
     : '<div class="cd-ev-empty">NO EVIDENCE SUBMITTED FOR THIS CASE</div>';
 
+  // Load cross-session intelligence — non-blocking
+  loadIntelligenceConnections(c.id);
+
   document.getElementById('caseDetail').classList.add('open');
   document.getElementById('caseOverlay').style.display = 'block';
+}
+
+async function loadIntelligenceConnections(caseId) {
+  const intelSection = document.getElementById('cdIntelSection');
+  const intelAlert   = document.getElementById('cdIntelAlert');
+  const intelSignals = document.getElementById('cdIntelSignals');
+
+  // Hide section while loading
+  intelSection.style.display = 'none';
+  intelAlert.innerHTML       = '';
+  intelSignals.innerHTML     = '';
+
+  const token = getToken();
+  if (!token) return;
+
+  try {
+    const resp = await fetch(`/api/evidence-index?caseId=${caseId}`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const data = await resp.json();
+
+    if (!data.ok || !data.matches || data.matches.length === 0) {
+      // No matches — keep section hidden
+      return;
+    }
+
+    // Show section
+    intelSection.style.display = '';
+
+    // Alert banner
+    const totalSignals = data.matchCount;
+    const totalCases   = data.totalSharedCases;
+    intelAlert.innerHTML = `
+      <div class="cd-intel-alert">
+        <div class="cd-intel-alert-dot"></div>
+        <div class="cd-intel-alert-text">
+          ${totalSignals} CROSS-CASE SIGNAL${totalSignals > 1 ? 'S' : ''} DETECTED · ${totalCases} RELATED CASE${totalCases > 1 ? 'S' : ''}
+        </div>
+        <div class="cd-intel-alert-warn">⚠</div>
+      </div>`;
+
+    // Signal rows with related cases
+    const lookupCase = (id) => allCases.find(c => c.id === id);
+
+    intelSignals.innerHTML = data.matches.map(m => {
+      const iconClass = m.signalType === 'msgtype' ? 'msgtype' : m.signalType;
+      const iconChar  = ({
+        phone:   '☎',
+        social:  '👤',
+        crypto:  '₿',
+        url:     '🔗',
+        msgtype: '✉',
+      })[m.signalType] || '◇';
+
+      const relatedRows = m.caseIds.map(id => {
+        const c = lookupCase(id);
+        const score   = c?.score;
+        const lvl     = score === null || score === undefined ? '' : score >= 60 ? 'high' : score >= 30 ? 'medium' : 'low';
+        const display = c
+          ? `${id} · ${c.playbook?.name || 'Unknown'} · ${score !== null && score !== undefined ? score : '—'}`
+          : `${id} · loading…`;
+
+        return `
+          <div class="cd-intel-rc" onclick="openCase('${id}')">
+            <div class="cd-intel-rc-id">${display}</div>
+            <div class="cd-intel-rc-arrow">→</div>
+          </div>`;
+      }).join('');
+
+      return `
+        <div class="cd-intel-signal">
+          <div class="cd-intel-signal-hdr">
+            <div class="cd-intel-icon ${iconClass}">${iconChar}</div>
+            <div class="cd-intel-label">${escHtml(m.display)}</div>
+            <div class="cd-intel-meta">${m.caseCount} CASE${m.caseCount > 1 ? 'S' : ''}</div>
+          </div>
+          ${relatedRows}
+        </div>`;
+    }).join('');
+
+  } catch (err) {
+    console.warn('[KASO] Intelligence lookup failed:', err);
+    intelSection.style.display = 'none';
+  }
+}
+
+function viewAttackCluster() {
+  if (!selectedCase) return;
+  showToast('ATTACK CLUSTER VIEW — COMING IN STEP 3C');
 }
 
 function closeCase() {
@@ -1277,4 +1402,3 @@ loadCases();
 </script>
 </body>
 </html>
-
