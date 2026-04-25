@@ -291,6 +291,27 @@ body::after {
 /* Placeholder */
 .placeholder { color: var(--text-dim); text-align: center; padding: 60px; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; }
 
+/* Evidence items in case detail */
+.cd-ev-item { padding: 9px 0; border-bottom: 1px solid var(--border); }
+.cd-ev-item:last-child { border-bottom: none; }
+.cd-ev-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.cd-ev-type { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; }
+.cd-ev-type-link    { background: var(--teal-dim);   color: var(--teal);   border: 1px solid rgba(45,212,191,0.2); }
+.cd-ev-type-screenshot { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); }
+.cd-ev-type-social  { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(245,166,35,0.2); }
+.cd-ev-type-crypto  { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(245,166,35,0.2); }
+.cd-ev-type-phone   { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); }
+.cd-ev-type-message { background: var(--red-dim);    color: var(--red);    border: 1px solid rgba(255,77,77,0.2); }
+.cd-ev-verdict { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; margin-left: auto; }
+.cd-ev-verdict-dangerous  { color: var(--red); }
+.cd-ev-verdict-suspicious { color: var(--amber); }
+.cd-ev-verdict-clean      { color: var(--green); }
+.cd-ev-verdict-unknown    { color: var(--text-dim); }
+.cd-ev-score { font-family: var(--mono); font-size: 11px; font-weight: 700; }
+.cd-ev-source { font-family: var(--mono); font-size: 9px; color: var(--text-dim); margin-bottom: 3px; word-break: break-all; }
+.cd-ev-summary { font-size: 11px; color: var(--text); line-height: 1.5; }
+.cd-ev-empty { font-family: var(--mono); font-size: 10px; color: var(--text-dim); padding: 8px 0; letter-spacing: 0.5px; }
+
 /* Case overlay backdrop */
 #caseOverlay { display: none; position: fixed; inset: 0; z-index: 299; background: rgba(0,0,0,0.4); }
 </style>
@@ -579,6 +600,11 @@ body::after {
     <div class="cd-section" id="cdTranscriptSection">
       <div class="cd-section-lbl">// TRANSCRIPT (<span id="cdTranscriptCount">0</span> TURNS)</div>
       <div id="cdTranscript" style="max-height:200px;overflow-y:auto;"></div>
+    </div>
+
+    <div class="cd-section" id="cdEvidenceSection">
+      <div class="cd-section-lbl">// EVIDENCE INTAKE (<span id="cdEvidenceCount">0</span> SUBMISSIONS)</div>
+      <div id="cdEvidence"></div>
     </div>
 
     <div class="cd-section">
@@ -889,6 +915,42 @@ async function openCase(id) {
           <div class="cd-t-text">${escHtml(t.text || '')}</div>
         </div>`).join('')
     : '<div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);padding:8px 0;">NO TRANSCRIPT RECORDED</div>';
+
+  // Evidence
+  const evLog = Array.isArray(c.evidence) ? c.evidence : [];
+  document.getElementById('cdEvidenceCount').textContent = evLog.length;
+  document.getElementById('cdEvidence').innerHTML = evLog.length
+    ? evLog.map(e => {
+        const verdict  = e.result?.verdict || 'unknown';
+        const score    = e.result?.risk_score ?? null;
+        const summary  = e.result?.summary || '';
+        const source   = e.source || '';
+        const type     = e.type   || 'unknown';
+        const scamType = e.result?.scam_type || '';
+        const patterns = e.result?.language_patterns || [];
+
+        const scamBadge = scamType && scamType !== 'unknown'
+          ? `<div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--amber);margin-bottom:3px;">SCAM TYPE: ${scamType.replace('_',' ')}</div>`
+          : '';
+
+        const patternBadge = patterns.length
+          ? `<div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);margin-bottom:3px;">PATTERNS: ${patterns.join(' · ')}</div>`
+          : '';
+
+        return `
+          <div class="cd-ev-item">
+            <div class="cd-ev-top">
+              <span class="cd-ev-type cd-ev-type-${type}">${type.toUpperCase()}</span>
+              <span class="cd-ev-verdict cd-ev-verdict-${verdict}">${verdict.toUpperCase()}</span>
+              ${score !== null ? `<span class="cd-ev-score" style="color:${verdict==='dangerous'?'var(--red)':verdict==='suspicious'?'var(--amber)':'var(--green)'}">${score}/100</span>` : ''}
+            </div>
+            <div class="cd-ev-source">${escHtml(source)}</div>
+            ${scamBadge}
+            ${patternBadge}
+            ${summary ? `<div class="cd-ev-summary">${escHtml(summary)}</div>` : ''}
+          </div>`;
+      }).join('')
+    : '<div class="cd-ev-empty">NO EVIDENCE SUBMITTED FOR THIS CASE</div>';
 
   document.getElementById('caseDetail').classList.add('open');
   document.getElementById('caseOverlay').style.display = 'block';
