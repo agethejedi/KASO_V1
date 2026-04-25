@@ -4,7 +4,7 @@
  *
  * GET    /api/cases              → list cases (by date or status)
  * GET    /api/cases?id=RXL-...   → single case by ID
- * POST   /api/cases              → create new case (called by user at session start)
+ * POST   /api/cases              → create new case
  * PATCH  /api/cases              → update case (score, evidence, transcript, disposition)
  *
  * KV binding: CASES
@@ -13,9 +13,122 @@
  *   case:{caseId}                        → full case object (JSON)
  *   case-index:date:{YYYY-MM-DD}         → JSON array of caseIds opened that day
  *   case-index:status:{status}           → JSON array of caseIds with that status
+ *
+ * Encryption: AES-256-GCM field-level encryption on sensitive PII.
+ * Keys stored in ENCRYPTION_KEYS Cloudflare secret as versioned JSON:
+ *   { "v1": "base64key", "v2": "base64key", ..., "current": "v1" }
+ *
+ * Encrypted fields:
+ *   user.first, user.last, user.email, user.phone
+ *   transcript (full array), evidence (full array)
  */
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── AES-256-GCM Encryption ───────────────────────────────────────────────────
+
+function parseEncryptionKeys(env) {
+  try {
+    if (!env?.ENCRYPTION_KEYS) return null;
+    return JSON.parse(env.ENCRYPTION_KEYS);
+  } catch {
+    console.warn('[KASO] ENCRYPTION_KEYS is not valid JSON — encryption disabled.');
+    return null;
+  }
+}
+
+async function importKey(base64Key) {
+  const raw = Uint8Array.from(atob(base64Key), c => c.charCodeAt(0));
+  return crypto.subtle.importKey(
+    'raw', raw,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptField(value, keysObj) {
+  if (!keysObj || value === null || value === undefined) return value;
+  const version   = keysObj.current;
+  const base64Key = keysObj[version];
+  if (!base64Key) return value;
+
+  const key       = await importKey(base64Key);
+  const iv        = crypto.getRandomValues(new Uint8Array(12));
+  const encoded   = new TextEncoder().encode(JSON.stringify(value));
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
+
+  return {
+    __encrypted: true,
+    keyVersion:  version,
+    iv:          btoa(String.fromCharCode(...iv)),
+    data:        btoa(String.fromCharCode(...new Uint8Array(encrypted))),
+  };
+}
+
+async function decryptField(encryptedObj, keysObj) {
+  if (!encryptedObj?.__encrypted) return encryptedObj;
+  if (!keysObj) return '[ENCRYPTED — key not configured]';
+
+  const base64Key = keysObj[encryptedObj.keyVersion];
+  if (!base64Key) return `[ENCRYPTED — key ${encryptedObj.keyVersion} not found]`;
+
+  try {
+    const key       = await importKey(base64Key);
+    const iv        = Uint8Array.from(atob(encryptedObj.iv),   c => c.charCodeAt(0));
+    const data      = Uint8Array.from(atob(encryptedObj.data), c => c.charCodeAt(0));
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+    return JSON.parse(new TextDecoder().decode(decrypted));
+  } catch {
+    return '[DECRYPTION ERROR]';
+  }
+}
+
+async function encryptCase(caseObj, keysObj) {
+  if (!keysObj) return caseObj;
+  const e = { ...caseObj };
+
+  e.user = {
+    ...caseObj.user,
+    first: await encryptField(caseObj.user?.first, keysObj),
+    last:  await encryptField(caseObj.user?.last,  keysObj),
+    email: await encryptField(caseObj.user?.email, keysObj),
+    phone: await encryptField(caseObj.user?.phone, keysObj),
+  };
+
+  if (Array.isArray(caseObj.transcript) && caseObj.transcript.length > 0) {
+    e.transcript = await encryptField(caseObj.transcript, keysObj);
+  }
+
+  if (Array.isArray(caseObj.evidence) && caseObj.evidence.length > 0) {
+    e.evidence = await encryptField(caseObj.evidence, keysObj);
+  }
+
+  return e;
+}
+
+async function decryptCase(caseObj, keysObj) {
+  if (!caseObj) return null;
+  const d = { ...caseObj };
+
+  d.user = {
+    ...caseObj.user,
+    first: await decryptField(caseObj.user?.first, keysObj),
+    last:  await decryptField(caseObj.user?.last,  keysObj),
+    email: await decryptField(caseObj.user?.email, keysObj),
+    phone: await decryptField(caseObj.user?.phone, keysObj),
+  };
+
+  if (caseObj.transcript?.__encrypted) {
+    d.transcript = await decryptField(caseObj.transcript, keysObj);
+  }
+
+  if (caseObj.evidence?.__encrypted) {
+    d.evidence = await decryptField(caseObj.evidence, keysObj);
+  }
+
+  return d;
+}
+
+// ─── General Helpers ──────────────────────────────────────────────────────────
 
 function json(data, init = {}) {
   return new Response(JSON.stringify(data, null, 2), {
@@ -36,7 +149,7 @@ function generateCaseId() {
 }
 
 function todayKey() {
-  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  return new Date().toISOString().slice(0, 10);
 }
 
 function isAuthorized(request, env) {
@@ -45,49 +158,96 @@ function isAuthorized(request, env) {
   return expected && auth === `Bearer ${expected}`;
 }
 
-// ─── KV helpers ───────────────────────────────────────────────────────────────
+// ─── KV Helpers ───────────────────────────────────────────────────────────────
 
-async function getCase(kv, caseId) {
-  return await kv.get(`case:${caseId}`, 'json');
+async function getCase(kv, caseId, keysObj) {
+  const raw = await kv.get(`case:${caseId}`, 'json');
+  return decryptCase(raw, keysObj);
 }
 
-async function putCase(kv, caseObj) {
-  await kv.put(`case:${caseObj.id}`, JSON.stringify(caseObj));
+async function putCase(kv, caseObj, keysObj) {
+  const encrypted = await encryptCase(caseObj, keysObj);
+  await kv.put(`case:${caseObj.id}`, JSON.stringify(encrypted));
 }
 
 async function addToIndex(kv, indexKey, caseId) {
   const existing = (await kv.get(indexKey, 'json')) || [];
   if (!existing.includes(caseId)) {
-    existing.unshift(caseId); // newest first
+    existing.unshift(caseId);
     await kv.put(indexKey, JSON.stringify(existing));
   }
 }
 
 async function removeFromIndex(kv, indexKey, caseId) {
   const existing = (await kv.get(indexKey, 'json')) || [];
-  await kv.put(indexKey, JSON.stringify(existing.filter((id) => id !== caseId)));
+  await kv.put(indexKey, JSON.stringify(existing.filter(id => id !== caseId)));
 }
 
-async function resolveCases(kv, ids, limit = 50, offset = 0) {
-  const page   = ids.slice(offset, offset + limit);
-  const cases  = await Promise.all(page.map((id) => kv.get(`case:${id}`, 'json').catch(() => null)));
+async function resolveCases(kv, ids, keysObj, limit = 50, offset = 0) {
+  const page  = ids.slice(offset, offset + limit);
+  const cases = await Promise.all(
+    page.map(id =>
+      kv.get(`case:${id}`, 'json')
+        .then(raw => decryptCase(raw, keysObj))
+        .catch(() => null)
+    )
+  );
   return cases.filter(Boolean);
 }
 
-// ─── CORS preflight ───────────────────────────────────────────────────────────
+// ─── Evidence merge helper ────────────────────────────────────────────────────
+// Merges incoming evidence with existing, deduplicates by type+source+timestamp,
+// sorts most recent first. This is the core fix for evidence persistence.
+
+function mergeEvidence(existing = [], incoming = []) {
+  if (!Array.isArray(incoming) || incoming.length === 0) return existing;
+  if (!Array.isArray(existing)) existing = [];
+
+  const seen   = new Set(existing.map(e => `${e.type}:${e.source}:${e.at}`));
+  const merged = [...existing];
+
+  for (const item of incoming) {
+    if (!item?.type) continue; // skip malformed items
+    const key = `${item.type}:${item.source}:${item.at}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      merged.push(item);
+    }
+  }
+
+  // Most recent first
+  return merged.sort((a, b) => new Date(b.at) - new Date(a.at));
+}
+
+// ─── Transcript merge helper ──────────────────────────────────────────────────
+// Merges transcript turns, deduplicates, sorts chronologically.
+
+function mergeTranscript(existing = [], incoming = []) {
+  if (!Array.isArray(incoming) || incoming.length === 0) return existing;
+  if (!Array.isArray(existing)) existing = [];
+
+  const seen   = new Set(existing.map(t => `${t.at}:${t.role}:${t.text}`));
+  const merged = [...existing];
+
+  for (const turn of incoming) {
+    if (!turn?.role) continue;
+    const key = `${turn.at}:${turn.role}:${turn.text}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      merged.push(turn);
+    }
+  }
+
+  return merged.sort((a, b) => new Date(a.at) - new Date(b.at));
+}
+
+// ─── CORS Preflight ───────────────────────────────────────────────────────────
 
 export async function onRequestOptions() {
   return json({ ok: true });
 }
 
 // ─── GET /api/cases ───────────────────────────────────────────────────────────
-//
-// Query params:
-//   ?id=RXL-...          single case lookup
-//   ?date=YYYY-MM-DD     cases opened on date (default: today)
-//   ?status=open|complete|escalated|reviewing|closed|abandoned
-//   ?limit=50            page size (max 100)
-//   ?offset=0            pagination offset
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -97,42 +257,34 @@ export async function onRequestGet(context) {
   }
 
   const kv = env?.CASES;
-  if (!kv) {
-    return json({ error: 'CASES KV binding not configured.' }, { status: 503 });
-  }
+  if (!kv) return json({ error: 'CASES KV binding not configured.' }, { status: 503 });
 
-  const url    = new URL(request.url);
-  const id     = url.searchParams.get('id');
-  const date   = url.searchParams.get('date') || todayKey();
-  const status = url.searchParams.get('status');
-  const limit  = Math.min(parseInt(url.searchParams.get('limit')  || '50', 10), 100);
-  const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+  const keysObj = parseEncryptionKeys(env);
+  const url     = new URL(request.url);
+  const id      = url.searchParams.get('id');
+  const date    = url.searchParams.get('date') || todayKey();
+  const status  = url.searchParams.get('status');
+  const limit   = Math.min(parseInt(url.searchParams.get('limit')  || '50', 10), 100);
+  const offset  = parseInt(url.searchParams.get('offset') || '0', 10);
 
-  // Single case
   if (id) {
-    const caseObj = await getCase(kv, id);
+    const caseObj = await getCase(kv, id, keysObj);
     if (!caseObj) return json({ error: 'Case not found.' }, { status: 404 });
     return json({ ok: true, case: caseObj });
   }
 
-  // By status
   if (status) {
     const ids   = (await kv.get(`case-index:status:${status}`, 'json')) || [];
-    const cases = await resolveCases(kv, ids, limit, offset);
+    const cases = await resolveCases(kv, ids, keysObj, limit, offset);
     return json({ ok: true, cases, total: ids.length, limit, offset });
   }
 
-  // By date (default today)
   const ids   = (await kv.get(`case-index:date:${date}`, 'json')) || [];
-  const cases = await resolveCases(kv, ids, limit, offset);
+  const cases = await resolveCases(kv, ids, keysObj, limit, offset);
   return json({ ok: true, cases, date, total: ids.length, limit, offset });
 }
 
 // ─── POST /api/cases ──────────────────────────────────────────────────────────
-//
-// Called by the frontend at session start — no auth required.
-// Body: { user: { first, last, email, phone }, playbook: { id, name } }
-// Returns: { ok, caseId, createdAt }
 
 export async function onRequestPost(context) {
   const { env, request } = context;
@@ -140,11 +292,8 @@ export async function onRequestPost(context) {
   const kv = env?.CASES;
 
   let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: 'Invalid JSON body.' }, { status: 400 });
-  }
+  try { body = await request.json(); }
+  catch { return json({ error: 'Invalid JSON body.' }, { status: 400 }); }
 
   const user     = body?.user     || {};
   const playbook = body?.playbook || {};
@@ -153,6 +302,7 @@ export async function onRequestPost(context) {
     return json({ error: 'user.first and user.email are required.' }, { status: 400 });
   }
 
+  const keysObj   = parseEncryptionKeys(env);
   const caseId    = generateCaseId();
   const createdAt = new Date().toISOString();
 
@@ -174,7 +324,6 @@ export async function onRequestPost(context) {
       name: String(playbook.name || '').trim(),
     },
 
-    // Populated by PATCH after session ends
     score:          null,
     level:          null,
     recommendation: null,
@@ -183,15 +332,13 @@ export async function onRequestPost(context) {
     transcript:     [],
     evidence:       [],
 
-    // Populated by admin via PATCH
-    disposition:   null,
-    analystNotes:  '',
-    lastContactAt: null,
+    disposition:        null,
+    analystNotes:       '',
+    lastContactAt:      null,
+    encryptionVersion:  keysObj?.current || null,
   };
 
   if (!kv) {
-    // Graceful degradation — return generated ID even without KV
-    // so the session can proceed client-side.
     return json({
       ok:        true,
       caseId,
@@ -200,7 +347,7 @@ export async function onRequestPost(context) {
     }, { status: 201 });
   }
 
-  await putCase(kv, caseObj);
+  await putCase(kv, caseObj, keysObj);
   await addToIndex(kv, `case-index:date:${todayKey()}`, caseId);
   await addToIndex(kv, `case-index:status:open`, caseId);
 
@@ -208,40 +355,26 @@ export async function onRequestPost(context) {
 }
 
 // ─── PATCH /api/cases ─────────────────────────────────────────────────────────
-//
-// Two callers:
-//
-//   1. app.js (no auth) — writes score/transcript/evidence at session end
-//      Body: { id, score, level, recommendation, matchedFactors, nextSteps,
-//              transcript, evidence, status: 'complete' | 'abandoned' }
-//
-//   2. Admin panel (auth required) — writes disposition/notes/status
-//      Body: { id, disposition, analystNotes, lastContactAt, status }
 
 export async function onRequestPatch(context) {
   const { env, request } = context;
 
   const kv = env?.CASES;
-  if (!kv) {
-    return json({ error: 'CASES KV binding not configured.' }, { status: 503 });
-  }
+  if (!kv) return json({ error: 'CASES KV binding not configured.' }, { status: 503 });
 
   let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: 'Invalid JSON body.' }, { status: 400 });
-  }
+  try { body = await request.json(); }
+  catch { return json({ error: 'Invalid JSON body.' }, { status: 400 }); }
 
   const { id } = body;
   if (!id) return json({ error: 'id is required.' }, { status: 400 });
 
-  const existing = await getCase(kv, id);
+  const keysObj  = parseEncryptionKeys(env);
+  const existing = await getCase(kv, id, keysObj);
   if (!existing) return json({ error: 'Case not found.' }, { status: 404 });
 
-  // Admin-only fields require the bearer token
   const adminFields     = ['disposition', 'analystNotes', 'lastContactAt'];
-  const wantsAdminField = adminFields.some((f) => f in body);
+  const wantsAdminField = adminFields.some(f => f in body);
   if (wantsAdminField && !isAuthorized(request, env)) {
     return json({ error: 'Unauthorized — admin token required.' }, { status: 401 });
   }
@@ -249,14 +382,31 @@ export async function onRequestPatch(context) {
   const oldStatus = existing.status;
   const updated   = { ...existing, updatedAt: new Date().toISOString() };
 
-  // ── Evaluation fields (written by app.js — no auth) ──
+  // ── Evaluation fields ──
   if ('score'          in body) updated.score          = body.score;
   if ('level'          in body) updated.level          = body.level;
   if ('recommendation' in body) updated.recommendation = body.recommendation;
   if ('matchedFactors' in body) updated.matchedFactors = body.matchedFactors;
   if ('nextSteps'      in body) updated.nextSteps      = body.nextSteps;
-  if ('transcript'     in body) updated.transcript     = body.transcript;
-  if ('evidence'       in body) updated.evidence       = body.evidence;
+
+  // ── Transcript — merge and deduplicate ──
+  if ('transcript' in body) {
+    updated.transcript = mergeTranscript(
+      Array.isArray(existing.transcript) ? existing.transcript : [],
+      body.transcript
+    );
+  }
+
+  // ── Evidence — merge and deduplicate ─────────────────────────────────────────
+  // This is the core evidence persistence fix. Incoming evidence is merged
+  // with any existing evidence already saved on the case, deduplicated by
+  // type + source + timestamp, and sorted most recent first.
+  if ('evidence' in body) {
+    updated.evidence = mergeEvidence(
+      Array.isArray(existing.evidence) ? existing.evidence : [],
+      body.evidence
+    );
+  }
 
   // ── Status transition ──
   if ('status' in body && body.status !== oldStatus) {
@@ -270,7 +420,10 @@ export async function onRequestPatch(context) {
   if ('analystNotes'  in body) updated.analystNotes  = body.analystNotes;
   if ('lastContactAt' in body) updated.lastContactAt = body.lastContactAt;
 
-  await putCase(kv, updated);
+  // Track current encryption version
+  updated.encryptionVersion = keysObj?.current || existing.encryptionVersion || null;
+
+  await putCase(kv, updated, keysObj);
 
   return json({ ok: true, case: updated });
 }
