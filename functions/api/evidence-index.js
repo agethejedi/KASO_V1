@@ -27,6 +27,47 @@
  *   still holds the readable raw values (encrypted at rest in cases.js).
  */
 
+// ─── AES-256-GCM Decryption (mirrors cases.js) ───────────────────────────────
+// We need to decrypt evidence at read time so the indexer can see the
+// raw values. Only decryption is needed here — encryption stays in cases.js.
+
+function parseEncryptionKeys(env) {
+  try {
+    if (!env?.ENCRYPTION_KEYS) return null;
+    return JSON.parse(env.ENCRYPTION_KEYS);
+  } catch {
+    return null;
+  }
+}
+
+async function importKey(base64Key) {
+  const raw = Uint8Array.from(atob(base64Key), c => c.charCodeAt(0));
+  return crypto.subtle.importKey(
+    'raw', raw,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function decryptField(encryptedObj, keysObj) {
+  if (!encryptedObj?.__encrypted) return encryptedObj;
+  if (!keysObj) return null;
+
+  const base64Key = keysObj[encryptedObj.keyVersion];
+  if (!base64Key) return null;
+
+  try {
+    const key       = await importKey(base64Key);
+    const iv        = Uint8Array.from(atob(encryptedObj.iv),   c => c.charCodeAt(0));
+    const data      = Uint8Array.from(atob(encryptedObj.data), c => c.charCodeAt(0));
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+    return JSON.parse(new TextDecoder().decode(decrypted));
+  } catch {
+    return null;
+  }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function json(data, init = {}) {
@@ -229,19 +270,11 @@ export async function onRequestGet(context) {
   const caseObj = await kv.get(`case:${caseId}`, 'json');
   if (!caseObj) return json({ error: 'Case not found.' }, { status: 404 });
 
-  // Note: evidence may be encrypted — but for indexing purposes
-  // we just need to know what was submitted. The /api/cases GET handler
-  // returns decrypted data, so we'll fetch from there instead to get
-  // readable evidence for signal extraction.
-  // For now, attempt to read evidence directly. If encrypted, the caller
-  // should provide decrypted evidence via the POST endpoint instead.
-  let evidence = caseObj.evidence;
+  // Decrypt evidence if it's encrypted at rest (matches cases.js)
+  const keysObj = parseEncryptionKeys(env);
+  let evidence  = caseObj.evidence;
   if (evidence?.__encrypted) {
-    return json({
-      error:   'Evidence is encrypted — index lookup requires decrypted evidence.',
-      hint:    'Use admin /api/cases?id=... to get decrypted case, then POST evidence to /api/evidence-index for indexing.',
-      caseId,
-    }, { status: 400 });
+    evidence = await decryptField(evidence, keysObj);
   }
   if (!Array.isArray(evidence)) evidence = [];
 
