@@ -291,6 +291,70 @@ body::after {
 /* Placeholder */
 .placeholder { color: var(--text-dim); text-align: center; padding: 60px; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; }
 
+/* ── ATTACK CLUSTER VIEW ── */
+.cl-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px; }
+.cl-title { font-family: var(--cond); font-size: 18px; font-weight: 700; letter-spacing: 3px; color: var(--text-hi); text-transform: uppercase; }
+.cl-badge { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; padding: 3px 9px; border-radius: 3px; }
+.cl-badge.red   { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(255,77,77,0.3); }
+.cl-badge.amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,166,35,0.3); }
+.cl-badge.teal  { background: var(--teal-dim);  color: var(--teal);  border: 1px solid rgba(45,212,191,0.3); margin-left: 4px; }
+.cl-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+.cl-stat { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 12px 14px; border-bottom: 2px solid; }
+.cl-stat.teal  { border-bottom-color: var(--teal); }
+.cl-stat.red   { border-bottom-color: var(--red); }
+.cl-stat.amber { border-bottom-color: var(--amber); }
+.cl-stat.green { border-bottom-color: var(--green); }
+.cl-stat-lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
+.cl-stat-val { font-family: var(--mono); font-size: 26px; line-height: 1; color: var(--text-hi); }
+.cl-stat.red   .cl-stat-val { color: var(--red); }
+.cl-stat.amber .cl-stat-val { color: var(--amber); }
+.cl-stat.green .cl-stat-val { color: var(--green); }
+.cl-stat-sub { font-family: var(--mono); font-size: 9px; color: var(--text-dim); margin-top: 3px; }
+
+.cl-sec-lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+.cl-web-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 5px; padding: 8px; margin-bottom: 16px; position: relative; overflow: hidden; }
+.cl-web-wrap::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(45,212,191,0.04) 0%, transparent 70%); pointer-events: none; }
+
+.cl-signal { background: var(--card); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 6px; overflow: hidden; }
+.cl-signal-hdr { display: flex; align-items: center; gap: 8px; padding: 9px 13px; border-bottom: 1px solid var(--border); }
+.cl-signal-icon { font-size: 12px; width: 24px; height: 24px; border-radius: 3px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.cl-signal-icon.phone   { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); }
+.cl-signal-icon.social  { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(245,166,35,0.25); }
+.cl-signal-icon.crypto  { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(245,166,35,0.25); }
+.cl-signal-icon.url     { background: var(--teal-dim);   color: var(--teal);   border: 1px solid rgba(45,212,191,0.25); }
+.cl-signal-icon.msgtype { background: var(--red-dim);    color: var(--red);    border: 1px solid rgba(255,77,77,0.25); }
+.cl-signal-label { font-family: var(--mono); font-size: 11px; color: var(--text-hi); flex: 1; }
+.cl-signal-meta  { font-family: var(--mono); font-size: 9px; color: var(--text-dim); }
+.cl-rc { display: flex; align-items: center; gap: 10px; padding: 8px 13px; border-bottom: 1px solid var(--card2); cursor: pointer; transition: background 0.12s; }
+.cl-rc:last-child { border-bottom: none; }
+.cl-rc:hover { background: var(--teal-glow); }
+.cl-rc-id   { font-family: var(--mono); font-size: 11px; color: var(--teal); width: 130px; flex-shrink: 0; }
+.cl-rc-date { font-family: var(--mono); font-size: 10px; color: var(--text-dim); width: 75px; flex-shrink: 0; }
+.cl-rc-play { font-family: var(--mono); font-size: 10px; color: var(--text); flex: 1; }
+.cl-rc-score { font-family: var(--mono); font-size: 13px; width: 45px; text-align: right; flex-shrink: 0; }
+.cl-rc-score.high   { color: var(--red); }
+.cl-rc-score.medium { color: var(--amber); }
+.cl-rc-score.low    { color: var(--green); }
+.cl-rc-status { font-family: var(--mono); font-size: 9px; letter-spacing: 0.8px; padding: 2px 7px; border-radius: 3px; width: 75px; text-align: center; flex-shrink: 0; }
+.cl-rc-status.open      { background: var(--teal-dim);   color: var(--teal);   border: 1px solid rgba(45,212,191,0.2); }
+.cl-rc-status.complete  { background: var(--green-dim);  color: var(--green);  border: 1px solid rgba(0,232,122,0.2); }
+.cl-rc-status.escalated { background: var(--red-dim);    color: var(--red);    border: 1px solid rgba(255,77,77,0.2); }
+.cl-rc-arrow { font-family: var(--mono); font-size: 10px; color: var(--text-dim); }
+
+.cl-threat { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 14px; margin-bottom: 16px; }
+.cl-threat-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--card2); font-family: var(--mono); font-size: 11px; }
+.cl-threat-row:last-child { border-bottom: none; }
+.cl-threat-key { color: var(--text-dim); letter-spacing: 0.5px; }
+.cl-threat-val { color: var(--text-hi); text-align: right; max-width: 60%; }
+.cl-threat-val.red   { color: var(--red); }
+.cl-threat-val.amber { color: var(--amber); }
+.cl-threat-val.teal  { color: var(--teal); }
+.cl-threat-loading { font-family: var(--mono); font-size: 11px; color: var(--text-dim); padding: 14px; text-align: center; letter-spacing: 0.5px; }
+
+.cl-actions { display: flex; gap: 8px; margin-top: 8px; }
+.cl-action-btn { flex: 1; padding: 10px 14px; }
+
 /* Intelligence connections — cross-case matches */
 .cd-intel-alert { background: rgba(255,77,77,0.08); border: 1px solid rgba(255,77,77,0.3); border-radius: 4px; padding: 9px 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 9px; }
 .cd-intel-alert-dot { width: 7px; height: 7px; border-radius: 50%; background: #ff4d4d; flex-shrink: 0; animation: cd-pulse 1.5s ease-in-out infinite; }
@@ -335,6 +399,68 @@ body::after {
 .cd-ev-source { font-family: var(--mono); font-size: 9px; color: var(--text-dim); margin-bottom: 3px; word-break: break-all; }
 .cd-ev-summary { font-size: 11px; color: var(--text); line-height: 1.5; }
 .cd-ev-empty { font-family: var(--mono); font-size: 10px; color: var(--text-dim); padding: 8px 0; letter-spacing: 0.5px; }
+
+/* ── ATTACK CLUSTER VIEW ── */
+.cluster-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px; }
+.cluster-title { font-family: var(--cond); font-size: 18px; font-weight: 700; letter-spacing: 3px; color: var(--text-hi); text-transform: uppercase; }
+.cluster-badges { display: flex; gap: 6px; align-items: center; }
+.cluster-badge { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; padding: 3px 9px; border-radius: 3px; }
+.cluster-badge.red   { background: rgba(255,77,77,0.12);  color: var(--red);   border: 1px solid rgba(255,77,77,0.3); }
+.cluster-badge.amber { background: rgba(245,166,35,0.12); color: var(--amber); border: 1px solid rgba(245,166,35,0.3); }
+.cluster-badge.teal  { background: rgba(45,212,191,0.12); color: var(--teal);  border: 1px solid rgba(45,212,191,0.3); }
+
+.cluster-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 14px; }
+
+.cluster-web-wrap { background: #09110f; border: 1px solid var(--border); border-radius: 5px; padding: 8px; margin-bottom: 14px; position: relative; overflow: hidden; }
+.cluster-web-wrap::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(45,212,191,0.04) 0%, transparent 70%); pointer-events: none; }
+.cluster-web-wrap svg { display: block; width: 100%; height: auto; }
+
+.cluster-section-lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+.cluster-alert { background: rgba(255,77,77,0.08); border: 1px solid rgba(255,77,77,0.3); border-radius: 4px; padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+.cluster-alert-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: cluster-pulse 1.5s ease-in-out infinite; flex-shrink: 0; }
+@keyframes cluster-pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.cluster-alert-text { font-family: var(--mono); font-size: 10px; color: var(--red); letter-spacing: 0.5px; flex: 1; }
+.cluster-alert-warn { font-size: 14px; color: var(--red); }
+
+.cluster-signal { background: var(--card); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 6px; overflow: hidden; }
+.cluster-signal-hdr { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.cluster-signal-icon { font-size: 11px; width: 22px; height: 22px; border-radius: 3px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.cluster-signal-icon.phone   { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); }
+.cluster-signal-icon.social  { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(245,166,35,0.25); }
+.cluster-signal-icon.crypto  { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(245,166,35,0.25); }
+.cluster-signal-icon.url     { background: var(--teal-dim);   color: var(--teal);   border: 1px solid rgba(45,212,191,0.25); }
+.cluster-signal-icon.msgtype { background: var(--red-dim);    color: var(--red);    border: 1px solid rgba(255,77,77,0.25); }
+.cluster-signal-label { font-family: var(--mono); font-size: 10px; color: var(--text-hi); flex: 1; }
+.cluster-signal-meta  { font-family: var(--mono); font-size: 9px;  color: var(--text-dim); }
+.cluster-rc { display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-bottom: 1px solid var(--card2); cursor: pointer; transition: background 0.12s; }
+.cluster-rc:last-child { border-bottom: none; }
+.cluster-rc:hover { background: var(--teal-glow); }
+.cluster-rc-id   { font-family: var(--mono); font-size: 10px; color: var(--teal);  letter-spacing: 0.5px; width: 130px; flex-shrink: 0; }
+.cluster-rc-date { font-family: var(--mono); font-size: 9px;  color: var(--text-dim); width: 60px; flex-shrink: 0; }
+.cluster-rc-play { font-family: var(--mono); font-size: 9px;  color: var(--text);  flex: 1; }
+.cluster-rc-score { font-family: var(--mono); font-size: 11px; width: 40px; flex-shrink: 0; text-align: right; }
+.cluster-rc-score.high   { color: var(--red); }
+.cluster-rc-score.medium { color: var(--amber); }
+.cluster-rc-score.low    { color: var(--green); }
+.cluster-rc-status { font-family: var(--mono); font-size: 8px; letter-spacing: 0.8px; padding: 1px 6px; border-radius: 2px; width: 70px; text-align: center; flex-shrink: 0; }
+.cluster-rc-status.open       { background: var(--teal-dim);  color: var(--teal);  border: 1px solid rgba(45,212,191,0.2); }
+.cluster-rc-status.complete   { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,232,122,0.2); }
+.cluster-rc-status.escalated  { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(255,77,77,0.2); }
+.cluster-rc-status.paused     { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,166,35,0.2); }
+.cluster-rc-arrow { font-family: var(--mono); font-size: 9px; color: var(--text-dim); }
+
+.cluster-threat { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 14px; margin-bottom: 14px; }
+.cluster-threat-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--card2); font-family: var(--mono); font-size: 10px; }
+.cluster-threat-row:last-child { border-bottom: none; }
+.cluster-threat-key { color: var(--text-dim); letter-spacing: 0.5px; }
+.cluster-threat-val { color: var(--text-hi); text-align: right; max-width: 60%; }
+.cluster-threat-val.red   { color: var(--red); }
+.cluster-threat-val.amber { color: var(--amber); }
+.cluster-threat-val.teal  { color: var(--teal); }
+
+.cluster-actions { display: flex; gap: 8px; margin-top: 14px; }
+.cluster-actions .btn { flex: 1; padding: 10px 14px; }
 
 /* Case overlay backdrop */
 #caseOverlay { display: none; position: fixed; inset: 0; z-index: 299; background: rgba(0,0,0,0.4); }
@@ -588,6 +714,11 @@ body::after {
     <div class="card"><div class="placeholder">SESSION LOG — CONNECT ADDITIONAL KV STORE TO ENABLE FULL SESSION HISTORY.</div></div>
   </div>
 
+  <!-- ── ATTACK CLUSTER VIEW ── -->
+  <div class="content" id="v-cluster" style="display:none;">
+    <div id="clusterContent"><div class="placeholder">SELECT A CASE WITH CROSS-SESSION SIGNALS TO VIEW ATTACK CLUSTER.</div></div>
+  </div>
+
 </div><!-- /main -->
 </div><!-- /shell -->
 
@@ -671,7 +802,7 @@ function updateClock() {
 updateClock(); setInterval(updateClock, 1000);
 
 // ── NAV ──
-const VIEWS = ['dashboard','cases','editor','patterns','settings','sessions'];
+const VIEWS = ['dashboard','cases','editor','patterns','settings','sessions','cluster'];
 const TITLES = {
   dashboard: 'DASHBOARD',
   cases:     'CASE REGISTRY',
@@ -679,6 +810,7 @@ const TITLES = {
   patterns:  'ANSWER PATTERNS',
   settings:  'SETTINGS',
   sessions:  'SESSIONS',
+  cluster:   'ATTACK CLUSTER',
 };
 
 function showView(name) {
@@ -1076,9 +1208,353 @@ async function loadIntelligenceConnections(caseId) {
   }
 }
 
-function viewAttackCluster() {
+async function viewAttackCluster() {
   if (!selectedCase) return;
-  showToast('ATTACK CLUSTER VIEW — COMING IN STEP 3C');
+
+  closeCase();
+  showView('cluster');
+
+  const container = document.getElementById('clusterContent');
+  container.innerHTML = '<div class="placeholder">LOADING ATTACK CLUSTER…</div>';
+
+  const token = getToken();
+  if (!token) {
+    container.innerHTML = '<div class="placeholder">SET ADMIN TOKEN TO LOAD CLUSTER.</div>';
+    return;
+  }
+
+  try {
+    const resp = await fetch(`/api/cluster?caseId=${selectedCase.id}`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const data = await resp.json();
+
+    if (!data.ok) {
+      container.innerHTML = `<div class="placeholder">${data.error || 'CLUSTER LOAD FAILED'}</div>`;
+      return;
+    }
+
+    // Adapt new Worker response to existing render shape
+    const adapted = {
+      clusterId:    `C-${(data.stats?.firstSeen || '').slice(0, 10).replace(/-/g, '') || 'UNKNOWN'}`,
+      cases:        data.cases || [],
+      signals:      (data.sharedSignals || []).map(s => ({
+        type:      s.type,
+        display:   s.display,
+        caseIds:   s.caseIds,
+        caseCount: s.caseIds.length,
+        matchType: s.matchType,
+      })),
+      stats: {
+        totalCases:     data.stats?.caseCount    || 0,
+        avgScore:       data.stats?.avgScore     || 0,
+        attackSpanDays: data.stats?.spanDays     || 1,
+        openCaseCount:  (data.cases || []).filter(c => c.status === 'open').length,
+      },
+      threatActor: data.threatProfile?.available ? {
+        primaryMethod:     data.threatProfile.primary_method,
+        contactPlatform:   data.threatProfile.contact_platform,
+        financialMethod:   data.threatProfile.financial_method,
+        escalationPattern: data.threatProfile.escalation_pattern,
+        attackDuration:    `${data.stats?.spanDays || 1} day(s) · ${(data.stats?.firstSeen || '').slice(0, 10)} → ${(data.stats?.lastSeen || '').slice(0, 10)}`,
+        confirmedVictims:  `${data.stats?.caseCount || 0} confirmed`,
+        geographicSpread:  data.threatProfile.geographic_spread,
+        similarPatterns:   data.threatProfile.key_indicators,
+      } : { error: data.threatProfile?.reason || 'Profile unavailable' },
+    };
+
+    if (!adapted.signals.length) {
+      container.innerHTML = '<div class="placeholder">NO CROSS-SESSION SIGNALS FOR THIS CASE.</div>';
+      return;
+    }
+
+    renderCluster(adapted);
+
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = '<div class="placeholder">FAILED TO LOAD CLUSTER.</div>';
+  }
+}
+
+function renderCluster(data) {
+  const container = document.getElementById('clusterContent');
+  const stats     = data.stats;
+  const ta        = data.threatActor || {};
+
+  // Compute total exposure from cases (placeholder — we don't track $ amounts yet)
+  const exposureLabel = '—';
+
+  container.innerHTML = `
+    <div class="cluster-header">
+      <div>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:3px;">
+          <span style="color:var(--teal);">RISKXLABS</span> / FRAUD AGENT / ADMIN / ATTACK CLUSTER
+        </div>
+        <div class="cluster-title">ATTACK CLUSTER · ${data.clusterId}</div>
+      </div>
+      <div class="cluster-badges">
+        <span class="cluster-badge red">${stats.totalCases} CASES</span>
+        <span class="cluster-badge amber">${stats.openCaseCount} OPEN</span>
+        <span class="cluster-badge teal">ACTIVE</span>
+      </div>
+    </div>
+
+    <div class="cluster-stats">
+      <div class="stat teal">
+        <div class="stat-lbl">TOTAL CASES</div>
+        <div class="stat-val">${stats.totalCases}</div>
+        <div class="stat-delta">IN CLUSTER</div>
+      </div>
+      <div class="stat ${stats.avgScore >= 60 ? 'red' : stats.avgScore >= 30 ? 'amber' : 'green'}">
+        <div class="stat-lbl">AVG RISK SCORE</div>
+        <div class="stat-val">${stats.avgScore}</div>
+        <div class="stat-delta">${stats.avgScore >= 60 ? 'HIGH RISK' : stats.avgScore >= 30 ? 'MEDIUM RISK' : 'LOW RISK'}</div>
+      </div>
+      <div class="stat amber">
+        <div class="stat-lbl">SHARED SIGNALS</div>
+        <div class="stat-val">${data.signals.length}</div>
+        <div class="stat-delta">CONNECTING CASES</div>
+      </div>
+      <div class="stat green">
+        <div class="stat-lbl">ATTACK SPAN</div>
+        <div class="stat-val">${stats.attackSpanDays}</div>
+        <div class="stat-delta">DAY${stats.attackSpanDays !== 1 ? 'S' : ''} ACTIVE</div>
+      </div>
+    </div>
+
+    <div class="cluster-section-lbl">// ATTACK WEB — EVIDENCE CONNECTIONS</div>
+    <div class="cluster-web-wrap">
+      ${renderAttackWebSVG(data)}
+    </div>
+
+    <div class="cluster-alert">
+      <div class="cluster-alert-dot"></div>
+      <div class="cluster-alert-text">COORDINATED ATTACK DETECTED — ${data.signals.length} SHARED SIGNAL${data.signals.length>1?'S':''} ACROSS ${stats.totalCases} CASES OVER ${stats.attackSpanDays} DAY${stats.attackSpanDays !== 1 ? 'S' : ''}</div>
+      <div class="cluster-alert-warn">⚠</div>
+    </div>
+
+    <div class="cluster-section-lbl">// CROSS-CASE SIGNAL DETAILS</div>
+    ${data.signals.map(s => renderClusterSignal(s, data.cases)).join('')}
+
+    ${ta && !ta.error ? `
+      <div class="cluster-section-lbl" style="margin-top:14px;">// THREAT ACTOR PROFILE — AI GENERATED</div>
+      <div class="cluster-threat">
+        ${ta.primaryMethod     ? `<div class="cluster-threat-row"><div class="cluster-threat-key">PRIMARY METHOD</div>     <div class="cluster-threat-val red">${escHtml(ta.primaryMethod)}</div></div>` : ''}
+        ${ta.contactPlatform   ? `<div class="cluster-threat-row"><div class="cluster-threat-key">CONTACT PLATFORM</div>   <div class="cluster-threat-val">${escHtml(ta.contactPlatform)}</div></div>` : ''}
+        ${ta.financialMethod   ? `<div class="cluster-threat-row"><div class="cluster-threat-key">FINANCIAL METHOD</div>   <div class="cluster-threat-val amber">${escHtml(ta.financialMethod)}</div></div>` : ''}
+        ${ta.escalationPattern ? `<div class="cluster-threat-row"><div class="cluster-threat-key">ESCALATION PATTERN</div> <div class="cluster-threat-val red">${escHtml(ta.escalationPattern)}</div></div>` : ''}
+        ${ta.attackDuration    ? `<div class="cluster-threat-row"><div class="cluster-threat-key">ATTACK DURATION</div>    <div class="cluster-threat-val">${escHtml(ta.attackDuration)}</div></div>` : ''}
+        ${ta.confirmedVictims  ? `<div class="cluster-threat-row"><div class="cluster-threat-key">CONFIRMED VICTIMS</div>  <div class="cluster-threat-val red">${escHtml(ta.confirmedVictims)}</div></div>` : ''}
+        ${ta.geographicSpread  ? `<div class="cluster-threat-row"><div class="cluster-threat-key">GEOGRAPHIC SPREAD</div>  <div class="cluster-threat-val">${escHtml(ta.geographicSpread)}</div></div>` : ''}
+        ${ta.similarPatterns   ? `<div class="cluster-threat-row"><div class="cluster-threat-key">SIMILAR PATTERNS</div>   <div class="cluster-threat-val teal">${escHtml(ta.similarPatterns)}</div></div>` : ''}
+      </div>
+    ` : ''}
+
+    <div class="cluster-actions">
+      <button class="btn btn-red"   onclick="escalateAllInCluster('${data.clusterId}')">⚠ ESCALATE ALL</button>
+      <button class="btn btn-amber" onclick="showToast('JOINT SAR — COMING SOON')">◈ JOINT SAR</button>
+      <button class="btn btn-teal"  onclick="exportClusterReport()">↓ EXPORT CLUSTER</button>
+      <button class="btn"           onclick="showView('cases')">← BACK TO CASES</button>
+    </div>
+  `;
+
+  // Stash the rendered cluster for export
+  window.__currentCluster = data;
+}
+
+function renderClusterSignal(signal, cases) {
+  const iconChar = ({
+    phone:   '☎',
+    social:  '👤',
+    crypto:  '₿',
+    url:     '🔗',
+    msgtype: '✉',
+  })[signal.type] || '◇';
+
+  const matchType = signal.type === 'msgtype' ? 'PATTERN MATCH' : 'EXACT MATCH';
+
+  const rows = signal.caseIds.map(id => {
+    const c = cases.find(x => x.id === id);
+    if (!c) return `
+      <div class="cluster-rc">
+        <div class="cluster-rc-id">${id}</div>
+        <div class="cluster-rc-play" style="color:var(--text-dim);">CASE NOT IN CLUSTER DATA</div>
+      </div>`;
+    const lvl   = c.score === null || c.score === undefined ? '' : c.score >= 60 ? 'high' : c.score >= 30 ? 'medium' : 'low';
+    const date  = formatDate(c.createdAt).split(',')[0];
+    return `
+      <div class="cluster-rc" onclick="reopenCaseFromCluster('${c.id}')">
+        <div class="cluster-rc-id">${c.id}</div>
+        <div class="cluster-rc-date">${date}</div>
+        <div class="cluster-rc-play">${escHtml(c.playbook?.name || '—')}</div>
+        <div class="cluster-rc-score ${lvl}">${c.score !== null && c.score !== undefined ? c.score : '—'}</div>
+        <div class="cluster-rc-status ${c.status || 'open'}">${(c.status || 'open').toUpperCase()}</div>
+        <div class="cluster-rc-arrow">→</div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="cluster-signal">
+      <div class="cluster-signal-hdr">
+        <div class="cluster-signal-icon ${signal.type}">${iconChar}</div>
+        <div class="cluster-signal-label">${escHtml(signal.display)}</div>
+        <div class="cluster-signal-meta">${signal.caseCount} CASES · ${matchType}</div>
+      </div>
+      ${rows}
+    </div>`;
+}
+
+function renderAttackWebSVG(data) {
+  // Sort cases chronologically
+  const cases = [...data.cases].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  const n = cases.length;
+  if (n === 0) return '<div style="padding:30px;text-align:center;color:var(--text-dim);font-family:var(--mono);font-size:10px;">NO CASES TO RENDER</div>';
+
+  const W = 880, H = 360;
+  const PAD_X = 60, PAD_TOP = 50, AXIS_Y = 290, NODE_Y = 245;
+
+  // Position case nodes evenly along x-axis
+  const xStep = n > 1 ? (W - 2 * PAD_X) / (n - 1) : 0;
+  const caseXs = cases.map((c, i) => PAD_X + i * xStep);
+
+  // Position signal nodes spread across the top
+  const sigCount = data.signals.length;
+  const sigXs    = data.signals.map((s, i) => PAD_X + (W - 2 * PAD_X) * (sigCount > 1 ? i / (sigCount - 1) : 0.5));
+  const sigY     = 90;
+
+  // Build connections
+  const connections = [];
+  data.signals.forEach((sig, sigIdx) => {
+    sig.caseIds.forEach(caseId => {
+      const caseIdx = cases.findIndex(c => c.id === caseId);
+      if (caseIdx >= 0) {
+        connections.push({
+          x1: sigXs[sigIdx], y1: sigY + 32,
+          x2: caseXs[caseIdx], y2: NODE_Y - 26,
+          color: sig.type === 'msgtype' ? '#f5a623' : '#2dd4bf',
+          dashed: sig.type === 'msgtype',
+        });
+      }
+    });
+  });
+
+  // Time axis labels
+  const dateLabels = cases.map((c, i) => {
+    const d = new Date(c.createdAt);
+    return { x: caseXs[i], label: d.toLocaleDateString('en-US',{month:'short',day:'numeric'}).toUpperCase() };
+  });
+
+  // Compute color and size for each case
+  const caseRender = cases.map((c, i) => {
+    const score = c.score !== null && c.score !== undefined ? c.score : 0;
+    const r     = Math.max(18, Math.min(28, 14 + score * 0.18));
+    const color = score >= 60 ? '#ff4d4d' : score >= 30 ? '#f5a623' : score > 0 ? '#00e87a' : '#4a6a70';
+    const fill  = score >= 60 ? 'rgba(255,77,77,0.1)' : score >= 30 ? 'rgba(245,166,35,0.1)' : score > 0 ? 'rgba(0,232,122,0.1)' : 'rgba(74,106,112,0.1)';
+    const isHighest = score === Math.max(...cases.map(x => x.score || 0));
+    return { c, x: caseXs[i], r, color, fill, isHighest, score };
+  });
+
+  // Compute sigil for signal nodes
+  const sigRender = data.signals.map((s, i) => {
+    const color = s.type === 'msgtype' ? '#f5a623' : '#2dd4bf';
+    const fill  = s.type === 'msgtype' ? 'rgba(245,166,35,0.08)' : 'rgba(45,212,191,0.08)';
+    const label = s.type.toUpperCase();
+    const subA  = s.display.length > 22 ? s.display.slice(0, 22) + '…' : s.display;
+    const subB  = `${s.caseCount} CASES`;
+    return { x: sigXs[i], y: sigY, color, fill, label, subA, subB };
+  });
+
+  return `
+    <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="cluster-arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L6,3 z" fill="#2dd4bf" opacity="0.6"/>
+        </marker>
+      </defs>
+
+      <!-- Legend -->
+      <line x1="30" y1="20" x2="60" y2="20" stroke="#2dd4bf" stroke-width="1.5"/>
+      <text x="65" y="24" fill="#4a6a70" font-family="Share Tech Mono,monospace" font-size="9">EXACT MATCH</text>
+      <line x1="170" y1="20" x2="200" y2="20" stroke="#f5a623" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <text x="205" y="24" fill="#4a6a70" font-family="Share Tech Mono,monospace" font-size="9">PATTERN MATCH</text>
+      <text x="${W - 30}" y="24" fill="#4a6a70" font-family="Share Tech Mono,monospace" font-size="9" text-anchor="end">NODE SIZE = RISK SCORE</text>
+
+      <!-- Timeline axis -->
+      <line x1="${PAD_X - 10}" y1="${AXIS_Y}" x2="${W - PAD_X + 10}" y2="${AXIS_Y}" stroke="#182e32" stroke-width="1"/>
+      ${dateLabels.map(d => `
+        <line x1="${d.x}" y1="${AXIS_Y - 5}" x2="${d.x}" y2="${AXIS_Y + 5}" stroke="#182e32" stroke-width="1"/>
+        <text x="${d.x}" y="${AXIS_Y + 18}" fill="#4a6a70" font-family="Share Tech Mono,monospace" font-size="9" text-anchor="middle">${d.label}</text>
+      `).join('')}
+
+      <!-- Connection lines -->
+      ${connections.map(c => `
+        <line x1="${c.x1}" y1="${c.y1}" x2="${c.x2}" y2="${c.y2}"
+              stroke="${c.color}" stroke-width="1.5" opacity="0.6"
+              ${c.dashed ? 'stroke-dasharray="4,3"' : ''}/>
+      `).join('')}
+
+      <!-- Signal nodes -->
+      ${sigRender.map(s => `
+        <circle cx="${s.x}" cy="${s.y}" r="32" fill="#0d1a1c" stroke="${s.color}" stroke-width="1.5"/>
+        <circle cx="${s.x}" cy="${s.y}" r="28" fill="${s.fill}"/>
+        <text x="${s.x}" y="${s.y - 5}" fill="${s.color}" font-family="Share Tech Mono,monospace" font-size="11" text-anchor="middle" font-weight="bold">${s.label}</text>
+        <text x="${s.x}" y="${s.y + 8}" fill="${s.color}" font-family="Share Tech Mono,monospace" font-size="7" text-anchor="middle">${escHtml(s.subA)}</text>
+        <text x="${s.x}" y="${s.y + 50}" fill="${s.color}" font-family="Share Tech Mono,monospace" font-size="8" text-anchor="middle" opacity="0.7">${s.subB}</text>
+      `).join('')}
+
+      <!-- Case nodes -->
+      ${caseRender.map(cr => `
+        <circle cx="${cr.x}" cy="${NODE_Y}" r="${cr.r}" fill="#0d1a1c" stroke="${cr.color}" stroke-width="${cr.isHighest ? 2 : 1.5}"
+                style="cursor:pointer;" onclick="reopenCaseFromCluster('${cr.c.id}')"/>
+        <circle cx="${cr.x}" cy="${NODE_Y}" r="${cr.r - 4}" fill="${cr.fill}" pointer-events="none">
+          ${cr.isHighest ? `<animate attributeName="r" values="${cr.r-4};${cr.r-1};${cr.r-4}" dur="2s" repeatCount="indefinite"/>` : ''}
+        </circle>
+        <text x="${cr.x}" y="${NODE_Y - 6}" fill="${cr.color}" font-family="Share Tech Mono,monospace" font-size="7" text-anchor="middle" pointer-events="none">${cr.c.id.slice(0, 7)}</text>
+        <text x="${cr.x}" y="${NODE_Y + 4}" fill="${cr.color}" font-family="Share Tech Mono,monospace" font-size="11" text-anchor="middle" font-weight="bold" pointer-events="none">${cr.score || '—'}</text>
+        <text x="${cr.x}" y="${NODE_Y + 14}" fill="${cr.color}" font-family="Share Tech Mono,monospace" font-size="7" text-anchor="middle" pointer-events="none">${(cr.c.status || '').toUpperCase().slice(0, 8)}</text>
+      `).join('')}
+    </svg>
+  `;
+}
+
+async function reopenCaseFromCluster(caseId) {
+  // Switch back to cases view and open the case detail
+  showView('cases');
+  await loadCases();
+  openCase(caseId);
+}
+
+async function escalateAllInCluster(clusterId) {
+  if (!window.__currentCluster) return;
+  if (!confirm(`Escalate all ${window.__currentCluster.cases.length} cases in this cluster?`)) return;
+
+  const token = getToken();
+  const ids   = window.__currentCluster.cases.map(c => c.id);
+
+  try {
+    await Promise.all(ids.map(id => fetch('/api/cases', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ id, status: 'escalated' }),
+    })));
+    showToast(`${ids.length} CASES ESCALATED`);
+    await loadCases();
+  } catch (err) {
+    showToast('ESCALATION FAILED', true);
+  }
+}
+
+function exportClusterReport() {
+  if (!window.__currentCluster) return;
+  const c = window.__currentCluster;
+  const blob = new Blob([JSON.stringify(c, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `kaso-cluster-${c.clusterId}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CLUSTER EXPORTED');
 }
 
 function closeCase() {
