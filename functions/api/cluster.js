@@ -202,9 +202,30 @@ function computeStats(clusterCases) {
     ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
     : 0;
 
-  // Heuristic exposure estimate from transcript dollar amounts
-  let totalExposure = 0;
+  // Use structured exposure field — falls back to transcript regex for legacy cases
+  let totalExposure   = 0;
+  let totalSent       = 0;
+  let totalRequested  = 0;
+  let totalRecovered  = 0;
+  let casesWithExposure = 0;
+
   for (const c of clusterCases) {
+    const exp = c.exposure || {};
+    const sent      = typeof exp.sent      === 'number' ? exp.sent      : null;
+    const requested = typeof exp.requested === 'number' ? exp.requested : null;
+    const recovered = typeof exp.recovered === 'number' ? exp.recovered : null;
+
+    if (sent !== null || requested !== null) {
+      casesWithExposure++;
+      totalSent      += sent      || 0;
+      totalRequested += requested || 0;
+      totalRecovered += recovered || 0;
+      // Total exposure prefers actual sent amount, falls back to requested
+      totalExposure  += sent !== null ? sent : (requested || 0);
+      continue;
+    }
+
+    // Legacy fallback — transcript regex for cases without structured exposure
     const transcript = Array.isArray(c.transcript) ? c.transcript : [];
     const fullText   = transcript.map(t => t.text || '').join(' ');
     const matches    = fullText.match(/\$[\d,]+(?:\.\d+)?[kKmM]?/g) || [];
@@ -226,12 +247,17 @@ function computeStats(clusterCases) {
     : 1;
 
   return {
-    caseCount:     clusterCases.length,
+    caseCount:        clusterCases.length,
     avgScore,
-    totalExposure: Math.round(totalExposure),
+    totalExposure:    Math.round(totalExposure),
+    totalSent:        Math.round(totalSent),
+    totalRequested:   Math.round(totalRequested),
+    totalRecovered:   Math.round(totalRecovered),
+    casesWithExposure,
+    exposureSource:   casesWithExposure > 0 ? 'structured' : 'extracted',
     spanDays,
-    firstSeen:     dates[0]?.toISOString() || null,
-    lastSeen:      dates[dates.length - 1]?.toISOString() || null,
+    firstSeen:        dates[0]?.toISOString() || null,
+    lastSeen:         dates[dates.length - 1]?.toISOString() || null,
   };
 }
 
