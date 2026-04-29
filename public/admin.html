@@ -355,6 +355,25 @@ body::after {
 .cl-actions { display: flex; gap: 8px; margin-top: 8px; }
 .cl-action-btn { flex: 1; padding: 10px 14px; }
 
+/* Exposure tracking */
+.cd-exposure-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.cd-exp-field { background: var(--card2); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; }
+.cd-exp-lbl { font-family: var(--mono); font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
+.cd-exp-input {
+  width: 100%; background: var(--bg) !important; border: 1px solid var(--border-hi);
+  border-radius: 3px; padding: 6px 8px; font-family: var(--mono); font-size: 12px;
+  color: var(--text-hi); outline: none; transition: border-color 0.2s;
+}
+.cd-exp-input:focus { border-color: var(--teal); }
+.cd-exp-input.requested { color: var(--amber); }
+.cd-exp-input.sent      { color: var(--red); }
+.cd-exp-input.recovered { color: var(--green); }
+.cd-exp-meta { font-family: var(--mono); font-size: 9px; color: var(--text-dim); margin-top: 4px; letter-spacing: 0.5px; }
+.cd-exp-actions { display: flex; gap: 6px; margin-top: 8px; }
+.cd-exp-actions .btn { font-size: 9px; padding: 6px 10px; flex: 1; }
+.cd-exp-extracted { background: var(--teal-glow); border: 1px solid rgba(45,212,191,0.2); border-radius: 4px; padding: 8px 10px; margin-top: 6px; font-family: var(--mono); font-size: 10px; color: var(--text); }
+.cd-exp-extracted-title { color: var(--teal); letter-spacing: 1px; text-transform: uppercase; font-size: 9px; margin-bottom: 4px; }
+
 /* Intelligence connections — cross-case matches */
 .cd-intel-alert { background: rgba(255,77,77,0.08); border: 1px solid rgba(255,77,77,0.3); border-radius: 4px; padding: 9px 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 9px; }
 .cd-intel-alert-dot { width: 7px; height: 7px; border-radius: 50%; background: #ff4d4d; flex-shrink: 0; animation: cd-pulse 1.5s ease-in-out infinite; }
@@ -762,6 +781,33 @@ body::after {
       <div id="cdEvidence"></div>
     </div>
 
+    <div class="cd-section" id="cdExposureSection">
+      <div class="cd-section-lbl">// FINANCIAL EXPOSURE</div>
+      <div class="cd-exposure-grid">
+        <div class="cd-exp-field">
+          <div class="cd-exp-lbl">REQUESTED</div>
+          <input class="cd-exp-input requested" id="cdExpRequested" type="text" placeholder="$0" />
+        </div>
+        <div class="cd-exp-field">
+          <div class="cd-exp-lbl">SENT</div>
+          <input class="cd-exp-input sent" id="cdExpSent" type="text" placeholder="$0" />
+        </div>
+        <div class="cd-exp-field">
+          <div class="cd-exp-lbl">RECOVERED</div>
+          <input class="cd-exp-input recovered" id="cdExpRecovered" type="text" placeholder="$0" />
+        </div>
+      </div>
+      <div class="cd-exp-meta" id="cdExpMeta">Last updated: never</div>
+      <div class="cd-exp-extracted" id="cdExpExtracted" style="display:none;">
+        <div class="cd-exp-extracted-title">⚡ AI-EXTRACTED — REVIEW BEFORE SAVING</div>
+        <div id="cdExpExtractedText"></div>
+      </div>
+      <div class="cd-exp-actions">
+        <button class="btn" onclick="extractExposureWithAI()">⚡ EXTRACT FROM TRANSCRIPT</button>
+        <button class="btn btn-teal" onclick="saveExposure()">⬆ SAVE EXPOSURE</button>
+      </div>
+    </div>
+
     <div class="cd-section" id="cdIntelSection" style="display:none;">
       <div class="cd-section-lbl">// INTELLIGENCE CONNECTIONS</div>
       <div id="cdIntelAlert"></div>
@@ -1117,11 +1163,122 @@ async function openCase(id) {
       }).join('')
     : '<div class="cd-ev-empty">NO EVIDENCE SUBMITTED FOR THIS CASE</div>';
 
+  // Load existing exposure
+  const exp = c.exposure || {};
+  document.getElementById('cdExpRequested').value = exp.requested !== null && exp.requested !== undefined ? formatExpAmount(exp.requested) : '';
+  document.getElementById('cdExpSent').value      = exp.sent      !== null && exp.sent      !== undefined ? formatExpAmount(exp.sent)      : '';
+  document.getElementById('cdExpRecovered').value = exp.recovered !== null && exp.recovered !== undefined ? formatExpAmount(exp.recovered) : '';
+  document.getElementById('cdExpMeta').textContent = exp.updatedAt
+    ? `Last updated ${formatDate(exp.updatedAt)}${exp.source ? ' · source: ' + exp.source : ''}`
+    : 'Not yet recorded';
+  document.getElementById('cdExpExtracted').style.display = 'none';
+
   // Load cross-session intelligence — non-blocking
   loadIntelligenceConnections(c.id);
 
   document.getElementById('caseDetail').classList.add('open');
   document.getElementById('caseOverlay').style.display = 'block';
+}
+
+function formatExpAmount(n) {
+  if (n === null || n === undefined || n === '') return '';
+  return '$' + Number(n).toLocaleString('en-US');
+}
+
+function parseExpAmount(s) {
+  if (!s) return null;
+  const cleaned = String(s).replace(/[^\d.-]/g, '');
+  if (!cleaned) return null;
+  const num = Number(cleaned);
+  return isFinite(num) && num >= 0 ? num : null;
+}
+
+async function extractExposureWithAI() {
+  if (!selectedCase) return;
+  const token = getToken();
+  if (!token) { showToast('TOKEN REQUIRED', true); return; }
+
+  const extractedEl = document.getElementById('cdExpExtracted');
+  const textEl      = document.getElementById('cdExpExtractedText');
+  extractedEl.style.display = 'block';
+  textEl.innerHTML = '<span style="color:var(--text-dim);">Analysing transcript…</span>';
+
+  try {
+    const resp = await fetch('/api/extract-exposure', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        transcript: selectedCase.transcript || [],
+        evidence:   selectedCase.evidence   || [],
+      }),
+    });
+    const data = await resp.json();
+    if (!data.ok || !data.extracted) {
+      textEl.innerHTML = `<span style="color:var(--red);">${data.error || 'Extraction failed'}</span>`;
+      return;
+    }
+
+    const ex = data.extracted;
+    const confColor = ex.confidence === 'high' ? 'var(--green)' : ex.confidence === 'medium' ? 'var(--amber)' : 'var(--red)';
+
+    textEl.innerHTML = `
+      <div style="margin-bottom:6px;">
+        REQUESTED: <span style="color:var(--amber);">${ex.requested !== null ? formatExpAmount(ex.requested) : '—'}</span> ·
+        SENT: <span style="color:var(--red);">${ex.sent !== null ? formatExpAmount(ex.sent) : '—'}</span> ·
+        RECOVERED: <span style="color:var(--green);">${ex.recovered !== null ? formatExpAmount(ex.recovered) : '—'}</span>
+      </div>
+      <div style="margin-bottom:6px;color:${confColor};">CONFIDENCE: ${ex.confidence.toUpperCase()}</div>
+      <div style="color:var(--text-dim);font-style:italic;margin-bottom:8px;">${escHtml(ex.reasoning || '')}</div>
+      <button class="btn btn-teal" style="font-size:9px;padding:5px 10px;" onclick="applyExtractedExposure(${ex.requested}, ${ex.sent}, ${ex.recovered})">↓ APPLY TO FIELDS</button>
+    `;
+
+  } catch (err) {
+    textEl.innerHTML = `<span style="color:var(--red);">Extraction failed: ${err.message}</span>`;
+  }
+}
+
+function applyExtractedExposure(requested, sent, recovered) {
+  if (requested !== null && requested !== undefined) document.getElementById('cdExpRequested').value = formatExpAmount(requested);
+  if (sent      !== null && sent      !== undefined) document.getElementById('cdExpSent').value      = formatExpAmount(sent);
+  if (recovered !== null && recovered !== undefined) document.getElementById('cdExpRecovered').value = formatExpAmount(recovered);
+  showToast('VALUES APPLIED — REVIEW AND SAVE');
+}
+
+async function saveExposure() {
+  if (!selectedCase) return;
+  const token = getToken();
+  if (!token) { showToast('TOKEN REQUIRED', true); return; }
+
+  const requested = parseExpAmount(document.getElementById('cdExpRequested').value);
+  const sent      = parseExpAmount(document.getElementById('cdExpSent').value);
+  const recovered = parseExpAmount(document.getElementById('cdExpRecovered').value);
+
+  try {
+    const resp = await fetch('/api/cases', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        id: selectedCase.id,
+        exposure: {
+          requested,
+          sent,
+          recovered,
+          source: 'analyst',
+        },
+      }),
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      selectedCase.exposure = data.case.exposure;
+      document.getElementById('cdExpMeta').textContent = `Last updated ${formatDate(data.case.exposure.updatedAt)} · source: analyst`;
+      document.getElementById('cdExpExtracted').style.display = 'none';
+      showToast('EXPOSURE SAVED');
+    } else {
+      showToast('SAVE FAILED', true);
+    }
+  } catch (err) {
+    showToast('SAVE FAILED', true);
+  }
 }
 
 async function loadIntelligenceConnections(caseId) {
