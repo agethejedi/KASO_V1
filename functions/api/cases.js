@@ -152,6 +152,13 @@ function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function sanitizeAmount(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const num = Number(String(value).replace(/[^\d.-]/g, ''));
+  if (!isFinite(num) || num < 0) return null;
+  return Math.round(num * 100) / 100;
+}
+
 function isAuthorized(request, env) {
   const auth     = request.headers.get('authorization') || '';
   const expected = env?.ADMIN_BEARER_TOKEN;
@@ -332,6 +339,16 @@ export async function onRequestPost(context) {
     transcript:     [],
     evidence:       [],
 
+    // Structured financial exposure tracking
+    exposure: {
+      requested: null,    // amount the fraudster asked for
+      sent:      null,    // amount the victim already sent
+      recovered: null,    // amount recovered after incident
+      currency:  'USD',
+      source:    null,    // 'agent' | 'analyst' | 'extracted' | null
+      updatedAt: null,
+    },
+
     disposition:        null,
     analystNotes:       '',
     lastContactAt:      null,
@@ -388,6 +405,19 @@ export async function onRequestPatch(context) {
   if ('recommendation' in body) updated.recommendation = body.recommendation;
   if ('matchedFactors' in body) updated.matchedFactors = body.matchedFactors;
   if ('nextSteps'      in body) updated.nextSteps      = body.nextSteps;
+
+  // ── Exposure — merge sub-fields, preserve existing values when not provided ──
+  if ('exposure' in body && body.exposure && typeof body.exposure === 'object') {
+    const prev = existing.exposure || {};
+    updated.exposure = {
+      requested: 'requested' in body.exposure ? sanitizeAmount(body.exposure.requested) : prev.requested ?? null,
+      sent:      'sent'      in body.exposure ? sanitizeAmount(body.exposure.sent)      : prev.sent      ?? null,
+      recovered: 'recovered' in body.exposure ? sanitizeAmount(body.exposure.recovered) : prev.recovered ?? null,
+      currency:  body.exposure.currency || prev.currency || 'USD',
+      source:    body.exposure.source   || prev.source   || null,
+      updatedAt: new Date().toISOString(),
+    };
+  }
 
   // ── Transcript — merge and deduplicate ──
   if ('transcript' in body) {
